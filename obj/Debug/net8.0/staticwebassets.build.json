@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "2RRAaZNCckpEB8ekhHtaFX7/gMmdzPdAB3nirXI8/5I=",
+  "Source": "MicroJack.API",
+  "BasePath": "_content/MicroJack.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

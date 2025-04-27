@@ -1,0 +1,6 @@
+@MicroJack.API_HostAddress = http://localhost:5134
+
+GET {{MicroJack.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
