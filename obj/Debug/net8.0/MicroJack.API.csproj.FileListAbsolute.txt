@@ -40,3 +40,4 @@
 /home/mike/Documents/Trabajo/RKS/MicroJack.API/obj/Debug/net8.0/MicroJack.API.pdb
 /home/mike/Documents/Trabajo/RKS/MicroJack.API/obj/Debug/net8.0/MicroJack.API.genruntimeconfig.cache
 /home/mike/Documents/Trabajo/RKS/MicroJack.API/obj/Debug/net8.0/ref/MicroJack.API.dll
+/home/mike/Documents/Trabajo/RKS/MicroJack.API/obj/Debug/net8.0/MicroJack.API.sourcelink.json
