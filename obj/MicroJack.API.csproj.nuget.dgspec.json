@@ -53,6 +53,10 @@
               "target": "Package",
               "version": "[3.3.0, )"
             },
+            "Phidget22.NET": {
+              "target": "Package",
+              "version": "[1.22.20250324, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.6.2, )"

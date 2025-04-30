@@ -10,6 +10,8 @@ namespace MicroJack.API.Routes
             // Configurar las rutas de cada módulo
             RegistrationRoutes.Configure(app);
             PreRegistrationRoutes.Configure(app);
+            PhidgetTestRoutes.Configure(app); // Nuevo módulo de prueba
+
             
             // Aquí se pueden agregar más módulos en el futuro
             // Por ejemplo:
