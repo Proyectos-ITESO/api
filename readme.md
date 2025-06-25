@@ -1,160 +1,87 @@
-# MicroJack API
+# MicroJack.API
 
-API de gestión de registros y pre-registros para control de acceso vehicular.
+API para el sistema de control de acceso vehicular "MicroJack".
 
-## 📋 Descripción
+## Descripción
 
-MicroJack API es un servicio backend diseñado para gestionar el control de acceso vehicular a través de registros y pre-registros. Permite registrar entradas de vehículos, gestionar pre-registros para visitantes esperados y mantener un historial completo de accesos.
+MicroJack.API es un servicio backend desarrollado en .NET 8 que gestiona el pre-registro y registro de visitantes, y controla una barrera física a través de un Phidget Interface Kit. La API expone endpoints para interactuar con una base de datos MongoDB y el hardware Phidget.
 
-## 🚀 Características
+## Características
 
-- **Gestión de Registros**: Crear y consultar registros de entrada de vehículos
-- **Sistema de Pre-registros**: Permite pre-registrar visitantes con sus datos vehiculares
-- **Búsqueda por placas**: Búsqueda eficiente de registros y pre-registros por número de placa
-- **API RESTful**: Endpoints claros y documentados con Swagger
-- **Base de datos MongoDB**: Almacenamiento persistente y escalable
-- **Arquitectura modular**: Código organizado por dominios y responsabilidades
+- **Gestión de Pre-Registros:** Permite a los residentes pre-registrar las placas de sus visitantes.
+- **Gestión de Registros:** Permite a los guardias de seguridad registrar la entrada y salida de visitantes.
+- **Control de Hardware:** Interactúa con un Phidget Interface Kit para controlar una barrera vehicular.
+- **Documentación de API:** Expone una interfaz Swagger para la exploración y prueba de los endpoints.
+- **Configuración Flexible:** Utiliza `appsettings.json` para una fácil configuración de la base de datos y CORS.
 
-## 🛠️ Tecnologías
+## Endpoints de la API
 
-- .NET 6.0
-- MongoDB
-- Swagger/OpenAPI
-- Docker (opcional)
+La API está organizada en tres grupos principales de endpoints:
 
-## 📦 Estructura del Proyecto
+### Pre-Registros (`/api/preregistrations`)
 
-```
-src/
-├── Models/
-│   ├── Registration.cs           # Modelo para registros
-│   ├── PreRegistration.cs        # Modelo para pre-registros
-│   └── MongoDbSettings.cs        # Configuración de MongoDB
-├── Services/
-│   ├── Interfaces/               # Interfaces de servicios
-│   │   ├── IMongoService.cs
-│   │   ├── IRegistrationService.cs
-│   │   └── IPreRegistrationService.cs
-│   ├── BaseMongoService.cs       # Servicio base de MongoDB
-│   ├── RegistrationService.cs    # Servicio de registros
-│   └── PreRegistrationService.cs # Servicio de pre-registros
-├── Routes/
-│   ├── ApiRoutes.cs              # Orquestador de rutas
-│   └── Modules/
-│       ├── RegistrationRoutes.cs # Rutas de registros
-│       └── PreRegistrationRoutes.cs # Rutas de pre-registros
-└── Program.cs                    # Punto de entrada
-```
+| Método | Ruta                               | Descripción                                                                 |
+|--------|------------------------------------|-----------------------------------------------------------------------------|
+| POST   | `/`                                | Crea un nuevo pre-registro.                                                 |
+| GET    | `/by-plate/{plate}`                | Obtiene un pre-registro pendiente por número de placa.                        |
+| GET    | `/`                                | Obtiene todos los pre-registros, con una opción de búsqueda.                |
+| PATCH  | `/{id}/status`                     | Actualiza el estado de un pre-registro (ej. "pendiente", "completado").     |
 
-## 🚦 Requisitos Previos
+### Registros (`/api/registrations`)
 
-- .NET 6.0 SDK
-- MongoDB (local o remoto)
-- Git
+| Método | Ruta      | Descripción                                                                 |
+|--------|-----------|-----------------------------------------------------------------------------|
+| POST   | `/`       | Crea un nuevo registro de entrada/salida.                                   |
+| GET    | `/`       | Obtiene todos los registros, con una opción de búsqueda.                    |
+| GET    | `/{id}`   | Obtiene un registro específico por su ID.                                   |
 
-## ⚙️ Configuración
+### Phidget Test (`/api/phidget-test`)
+
+| Método | Ruta                 | Descripción                                                                 |
+|--------|----------------------|-----------------------------------------------------------------------------|
+| POST   | `/initialize`        | Inicializa la conexión con el Phidget Interface Kit.                        |
+| POST   | `/relay/{channel}/toggle` | Cambia el estado (ON/OFF) de un relé específico (0-3).                   |
+| GET    | `/status`            | Obtiene el estado actual de todos los relés.                                |
+| POST   | `/close`             | Cierra la conexión con el Phidget y apaga todos los relés.                  |
+
+## Cómo Empezar
+
+### Prerrequisitos
+
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [MongoDB](https://www.mongodb.com/try/download/community)
+- Opcional: Un Phidget Interface Kit 0/0/4 para probar la funcionalidad de hardware.
+
+### Instalación
 
 1. Clona el repositorio:
-```bash
-git clone https://github.com/tu-usuario/microjack-api.git
-cd microjack-api
-```
+   ```bash
+   git clone https://github.com/Proyectos-ITESO/api.git
+   cd api
+   ```
 
-2. Configura las variables de entorno en `appsettings.json`:
-```json
-{
-  "MongoDbSettings": {
-    "ConnectionString": "tu_connection_string",
-    "DatabaseName": "nombre_de_tu_base_de_datos"
-  },
-  "CorsSettings": {
-    "AllowedOrigins": ["http://localhost:3000"]
-  }
-}
-```
+2. Configura `appsettings.Development.json` con tu cadena de conexión de MongoDB:
+   ```json
+   {
+     "MongoDbSettings": {
+       "ConnectionString": "mongodb://localhost:27017",
+       "DatabaseName": "MicroJackDB"
+     },
+     "CorsSettings": {
+       "AllowedOrigins": [
+         "http://localhost:3000"
+       ]
+     }
+   }
+   ```
 
-3. Restaura las dependencias:
-```bash
-dotnet restore
-```
+3. Ejecuta la aplicación:
+   ```bash
+   dotnet run
+   ```
 
-## 🏃‍♂️ Ejecución
+La API estará disponible en `https://localhost:7123` (o un puerto similar) y la interfaz de Swagger se encontrará en la raíz (`/`).
 
-1. Ejecuta la aplicación:
-```bash
-dotnet run
-```
+## Contribuciones
 
-2. Accede a Swagger UI: `http://localhost:5000/` (en desarrollo)
-
-## 📚 API Endpoints
-
-### Registros
-
-- `GET /api/registrations` - Obtiene todos los registros
-- `GET /api/registrations/{id}` - Obtiene un registro por ID
-- `POST /api/registrations` - Crea un nuevo registro
-- `GET /api/registrations?search={placa}` - Busca registros por placa
-
-### Pre-registros
-
-- `GET /api/preregistrations` - Obtiene todos los pre-registros
-- `POST /api/preregistrations` - Crea un nuevo pre-registro
-- `GET /api/preregistrations/by-plate/{plate}` - Busca pre-registro pendiente por placa
-- `PATCH /api/preregistrations/{id}/status` - Actualiza el estado de un pre-registro
-
-## 📝 Modelos de Datos
-
-### Registration
-```json
-{
-  "id": "string",
-  "registrationType": "string",
-  "house": "string",
-  "visitReason": "string",
-  "visitorName": "string",
-  "visitedPerson": "string",
-  "guard": "string",
-  "comments": "string",
-  "folio": "string",
-  "entryTimestamp": "datetime",
-  "plates": "string",
-  "brand": "string",
-  "color": "string",
-  "status": "string",
-  "createdAt": "datetime",
-  "updatedAt": "datetime"
-}
-```
-
-### PreRegistration
-```json
-{
-  "id": "string",
-  "plates": "string",
-  "visitorName": "string",
-  "brand": "string",
-  "color": "string",
-  "houseVisited": "string",
-  "arrivalDateTime": "datetime",
-  "personVisited": "string",
-  "status": "string",
-  "createdBy": "string",
-  "createdAt": "datetime"
-}
-```
-
-## 🔒 Estados
-
-- **PENDIENTE**: Pre-registro creado, esperando llegada
-- **INGRESADO**: Visitante ha ingresado
-- **CERRADO**: Visita finalizada
-- **CANCELADO**: Pre-registro cancelado
-
-## 🧪 Pruebas
-
-Para ejecutar las pruebas unitarias:
-```bash
-dotnet test
-```
-
+Las contribuciones son bienvenidas. Por favor, abre un "issue" para discutir cambios mayores o un "pull request" con tus mejoras.
