@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MicroJack.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+748a7d8d42b1a5a5ea5f4478b6e0055b397004c9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e0362a246c75b66b060c46d499623235dc89c723")]
 [assembly: System.Reflection.AssemblyProductAttribute("MicroJack.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MicroJack.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

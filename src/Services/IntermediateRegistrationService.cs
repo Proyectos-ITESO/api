@@ -82,6 +82,29 @@ namespace MicroJack.API.Services
                     return false;
                 }
 
+                // Check if already approved
+                if (intermediate.Status == "APPROVED")
+                {
+                    _logger.LogInformation("Intermediate registration already approved for token: {Token}", token);
+                    return true; // Consider it successful since it was already approved
+                }
+
+                // Check if a pre-registration with the same plates already exists to prevent duplicates
+                var existingPreReg = await _preRegistrationService.GetPendingPreRegistrationByPlateAsync(intermediate.Plates);
+                if (existingPreReg != null)
+                {
+                    _logger.LogWarning("Pre-registration already exists for plates: {Plates}. Marking intermediate as approved.", intermediate.Plates);
+                    
+                    // Update intermediate status to approved without creating duplicate
+                    var updateFilter = Builders<IntermediateRegistration>.Filter.Eq(ir => ir.ApprovalToken, token);
+                    var updateOnly = Builders<IntermediateRegistration>.Update
+                        .Set(ir => ir.Status, "APPROVED")
+                        .Set(ir => ir.ApprovedAt, DateTime.UtcNow);
+
+                    await _intermediateRegistrationsCollection.UpdateOneAsync(updateFilter, updateOnly);
+                    return true;
+                }
+
                 // Create PreRegistration from intermediate
                 var preRegistration = new PreRegistration
                 {
