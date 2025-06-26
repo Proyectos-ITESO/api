@@ -1,26 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "/home/mike/Documents/Trabajo/RKS/MicroJack.API/MicroJack.API.csproj": {}
+    "/home/emfr/chambas/Insano/realGforLife/api/MicroJack.API.csproj": {}
   },
   "projects": {
-    "/home/mike/Documents/Trabajo/RKS/MicroJack.API/MicroJack.API.csproj": {
+    "/home/emfr/chambas/Insano/realGforLife/api/MicroJack.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/mike/Documents/Trabajo/RKS/MicroJack.API/MicroJack.API.csproj",
+        "projectUniqueName": "/home/emfr/chambas/Insano/realGforLife/api/MicroJack.API.csproj",
         "projectName": "MicroJack.API",
-        "projectPath": "/home/mike/Documents/Trabajo/RKS/MicroJack.API/MicroJack.API.csproj",
-        "packagesPath": "/home/mike/.nuget/packages/",
-        "outputPath": "/home/mike/Documents/Trabajo/RKS/MicroJack.API/obj/",
+        "projectPath": "/home/emfr/chambas/Insano/realGforLife/api/MicroJack.API.csproj",
+        "packagesPath": "/home/emfr/.nuget/packages/",
+        "outputPath": "/home/emfr/chambas/Insano/realGforLife/api/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/mike/.nuget/NuGet/NuGet.Config"
+          "/home/emfr/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "/usr/lib64/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -33,13 +32,7 @@
           "warnAsError": [
             "NU1605"
           ]
-        },
-        "restoreAuditProperties": {
-          "enableAudit": "true",
-          "auditLevel": "low",
-          "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "9.0.100"
+        }
       },
       "frameworks": {
         "net8.0": {
@@ -57,9 +50,17 @@
               "target": "Package",
               "version": "[1.22.20250324, )"
             },
+            "Selenium.WebDriver": {
+              "target": "Package",
+              "version": "[4.28.0, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.6.2, )"
+            },
+            "WebDriverManager": {
+              "target": "Package",
+              "version": "[2.17.4, )"
             }
           },
           "imports": [
@@ -73,12 +74,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.NETCore.App.Host.linux-x64",
-              "version": "[8.0.15, 8.0.15]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -87,7 +82,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/9.0.105/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/8.0.110/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

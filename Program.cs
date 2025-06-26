@@ -24,6 +24,8 @@ builder.Services.Configure<MongoDbSettings>(
 builder.Services.AddSingleton<IMongoService, BaseMongoService>();
 builder.Services.AddSingleton<IRegistrationService, RegistrationService>();
 builder.Services.AddSingleton<IPreRegistrationService, PreRegistrationService>();
+builder.Services.AddSingleton<IIntermediateRegistrationService, IntermediateRegistrationService>();
+builder.Services.AddSingleton<IWhatsAppService, WhatsAppService>();
 
 // Configurar CORS
 var corsSettings = builder.Configuration.GetSection("CorsSettings");
