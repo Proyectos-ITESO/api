@@ -1,21 +1,20 @@
 // Services/PreRegistrationService.cs
-using MongoDB.Driver;
-using MongoDB.Bson;
-using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 using MicroJack.API.Models;
 using MicroJack.API.Services.Interfaces;
+using MicroJack.API.Data;
 
 namespace MicroJack.API.Services
 {
     public class PreRegistrationService : IPreRegistrationService
     {
-        private readonly IMongoCollection<PreRegistration> _preRegistrationsCollection;
+        private readonly ApplicationDbContext _context;
         private readonly ILogger<PreRegistrationService> _logger;
 
-        public PreRegistrationService(IMongoService mongoService, ILogger<PreRegistrationService> logger)
+        public PreRegistrationService(ApplicationDbContext context, ILogger<PreRegistrationService> logger)
         {
+            _context = context;
             _logger = logger;
-            _preRegistrationsCollection = mongoService.Database.GetCollection<PreRegistration>("preregistrations");
         }
 
         public async Task<PreRegistration> CreatePreRegistrationAsync(PreRegistration newPreRegistration)
@@ -23,15 +22,15 @@ namespace MicroJack.API.Services
             newPreRegistration.CreatedAt = DateTime.UtcNow;
             newPreRegistration.Status = "PENDIENTE";
             
-            if (string.IsNullOrEmpty(newPreRegistration.Id))
-            {
-                newPreRegistration.Id = ObjectId.GenerateNewId().ToString();
-            }
+            // Entity Framework will auto-generate the ID
+            newPreRegistration.Id = 0;
 
             _logger.LogInformation("Intentando crear pre-registro para placas: {Plates}", newPreRegistration.Plates);
             try
             {
-                await _preRegistrationsCollection.InsertOneAsync(newPreRegistration);
+                _context.PreRegistrations.Add(newPreRegistration);
+                await _context.SaveChangesAsync();
+                
                 _logger.LogInformation("Pre-registro creado exitosamente: ID={Id}, Placas={Plates}", 
                     newPreRegistration.Id, newPreRegistration.Plates);
                 return newPreRegistration;
@@ -51,13 +50,9 @@ namespace MicroJack.API.Services
             _logger.LogInformation("Buscando pre-registro PENDIENTE por placa: {Plate}", plate);
             try
             {
-                var filterBuilder = Builders<PreRegistration>.Filter;
-                var filter = filterBuilder.And(
-                    filterBuilder.Regex(pr => pr.Plates, new BsonRegularExpression($"^{plate}$", "i")),
-                    filterBuilder.Eq(pr => pr.Status, "PENDIENTE")
-                );
-
-                return await _preRegistrationsCollection.Find(filter).FirstOrDefaultAsync();
+                return await _context.PreRegistrations
+                    .Where(pr => pr.Plates.ToLower() == plate.ToLower() && pr.Status == "PENDIENTE")
+                    .FirstOrDefaultAsync();
             }
             catch (Exception ex)
             {
@@ -72,20 +67,20 @@ namespace MicroJack.API.Services
                 searchTerm ?? "N/A");
             try
             {
-                FilterDefinition<PreRegistration> filter = Builders<PreRegistration>.Filter.Empty;
+                var query = _context.PreRegistrations.AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
                     _logger.LogInformation("Aplicando filtro de búsqueda: {SearchTerm}", searchTerm);
-                    var searchRegex = new BsonRegularExpression(searchTerm, "i");
-                    filter = Builders<PreRegistration>.Filter.Or(
-                        Builders<PreRegistration>.Filter.Regex(pr => pr.Plates, searchRegex),
-                        Builders<PreRegistration>.Filter.Regex(pr => pr.VisitorName, searchRegex)
-                    );
+                    var searchTermLower = searchTerm.ToLower();
+                    query = query.Where(pr => 
+                        pr.Plates.ToLower().Contains(searchTermLower) ||
+                        pr.VisitorName.ToLower().Contains(searchTermLower));
                 }
 
-                var sort = Builders<PreRegistration>.Sort.Descending(pr => pr.CreatedAt);
-                return await _preRegistrationsCollection.Find(filter).Sort(sort).ToListAsync();
+                return await query
+                    .OrderByDescending(pr => pr.CreatedAt)
+                    .ToListAsync();
             }
             catch (Exception ex)
             {
@@ -94,10 +89,9 @@ namespace MicroJack.API.Services
             }
         }
 
-        public async Task<bool> UpdatePreRegistrationStatusAsync(string id, string newStatus)
+        public async Task<bool> UpdatePreRegistrationStatusAsync(int id, string newStatus)
         {
-            if (string.IsNullOrWhiteSpace(id) || !ObjectId.TryParse(id, out _) || 
-                string.IsNullOrWhiteSpace(newStatus))
+            if (id <= 0 || string.IsNullOrWhiteSpace(newStatus))
             {
                 _logger.LogWarning("Intento de actualizar estado de pre-registro con ID inválido ({Id}) o estado vacío ({Status}).", 
                     id, newStatus);
@@ -108,13 +102,19 @@ namespace MicroJack.API.Services
                 id, newStatus);
             try
             {
-                var filter = Builders<PreRegistration>.Filter.Eq(pr => pr.Id, id);
-                var update = Builders<PreRegistration>.Update.Set(pr => pr.Status, 
-                    newStatus.Trim().ToUpperInvariant());
+                var preRegistration = await _context.PreRegistrations
+                    .FirstOrDefaultAsync(pr => pr.Id == id);
 
-                var updateResult = await _preRegistrationsCollection.UpdateOneAsync(filter, update);
+                if (preRegistration == null)
+                {
+                    _logger.LogWarning("Pre-registro con ID: {Id} no encontrado.", id);
+                    return false;
+                }
 
-                if (updateResult.IsAcknowledged && updateResult.ModifiedCount > 0)
+                preRegistration.Status = newStatus.Trim().ToUpperInvariant();
+                var changeCount = await _context.SaveChangesAsync();
+
+                if (changeCount > 0)
                 {
                     _logger.LogInformation("Estado del pre-registro ID: {Id} actualizado a '{NewStatus}'.", 
                         id, newStatus.ToUpperInvariant());
@@ -122,9 +122,8 @@ namespace MicroJack.API.Services
                 }
                 else
                 {
-                    _logger.LogWarning("No se modificó el estado del pre-registro ID: {Id}. ¿Existe? (Resultado: Matched={MatchedCount}, Modified={ModifiedCount})",
-                        id, updateResult.MatchedCount, updateResult.ModifiedCount);
-                    return updateResult.MatchedCount > 0;
+                    _logger.LogWarning("No se modificó el estado del pre-registro ID: {Id}.", id);
+                    return false;
                 }
             }
             catch (Exception ex)

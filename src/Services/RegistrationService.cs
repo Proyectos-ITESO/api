@@ -1,7 +1,5 @@
-// Services/RegistrationService.cs
-using MongoDB.Driver;
-using MongoDB.Bson;
-using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
+using MicroJack.API.Data;
 using MicroJack.API.Models;
 using MicroJack.API.Services.Interfaces;
 
@@ -9,13 +7,13 @@ namespace MicroJack.API.Services
 {
     public class RegistrationService : IRegistrationService
     {
-        private readonly IMongoCollection<Registration> _registrationsCollection;
+        private readonly ApplicationDbContext _context;
         private readonly ILogger<RegistrationService> _logger;
 
-        public RegistrationService(IMongoService mongoService, ILogger<RegistrationService> logger)
+        public RegistrationService(ApplicationDbContext context, ILogger<RegistrationService> logger)
         {
+            _context = context;
             _logger = logger;
-            _registrationsCollection = mongoService.Database.GetCollection<Registration>("registrations");
         }
 
         public async Task<List<Registration>> GetRegistrationsAsync(string? plate = null)
@@ -25,17 +23,16 @@ namespace MicroJack.API.Services
                 if (!string.IsNullOrWhiteSpace(plate))
                 {
                     _logger.LogInformation("Buscando registros por placa: {Plate}", plate);
-                    var filter = Builders<Registration>.Filter.Regex(r => r.Plates,
-                        new BsonRegularExpression($"^{plate}$", "i"));
-                    return await _registrationsCollection.Find(filter)
-                        .SortByDescending(r => r.CreatedAt)
+                    return await _context.Registrations
+                        .Where(r => r.Plates == plate)
+                        .OrderByDescending(r => r.CreatedAt)
                         .ToListAsync();
                 }
                 else
                 {
                     _logger.LogInformation("Obteniendo todos los registros.");
-                    return await _registrationsCollection.Find(_ => true)
-                        .SortByDescending(r => r.CreatedAt)
+                    return await _context.Registrations
+                        .OrderByDescending(r => r.CreatedAt)
                         .ToListAsync();
                 }
             }
@@ -46,18 +43,12 @@ namespace MicroJack.API.Services
             }
         }
 
-        public async Task<Registration?> GetRegistrationByIdAsync(string id)
+        public async Task<Registration?> GetRegistrationByIdAsync(int id)
         {
-            if (!ObjectId.TryParse(id, out _))
-            {
-                _logger.LogWarning("ID inválido para búsqueda: {Id}", id);
-                return null;
-            }
-
             _logger.LogInformation("Buscando registro por ID: {Id}", id);
             try
             {
-                return await _registrationsCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+                return await _context.Registrations.FindAsync(id);
             }
             catch (Exception ex)
             {
@@ -82,23 +73,19 @@ namespace MicroJack.API.Services
                 _logger.LogWarning("El Folio recibido '{Folio}' no parece ser un UUID válido.", newRegistration.Folio);
             }
 
-            if (string.IsNullOrEmpty(newRegistration.Id))
-            {
-                newRegistration.Id = ObjectId.GenerateNewId().ToString();
-            }
-
-            _logger.LogInformation("Intentando crear registro con ID: {Id}, Folio (UUID recibido): {Folio}",
-                newRegistration.Id, newRegistration.Folio ?? "N/A");
+            _logger.LogInformation("Intentando crear registro con Folio (UUID recibido): {Folio}",
+                newRegistration.Folio ?? "N/A");
             try
             {
-                await _registrationsCollection.InsertOneAsync(newRegistration);
+                _context.Registrations.Add(newRegistration);
+                await _context.SaveChangesAsync();
                 _logger.LogInformation("Registro creado exitosamente: ID={Id}, Folio={Folio}", 
                     newRegistration.Id, newRegistration.Folio ?? "N/A");
                 return newRegistration;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error inesperado al crear registro ID: {Id}", newRegistration.Id);
+                _logger.LogError(ex, "Error inesperado al crear registro");
                 throw new ApplicationException("Error inesperado al crear el registro.", ex);
             }
         }

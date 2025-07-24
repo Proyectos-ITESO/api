@@ -1,87 +1,71 @@
-// Models/Registration.cs
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
-// Asegúrate que el namespace coincida con el nombre de tu proyecto
 namespace MicroJack.API.Models
 {
     public class Registration
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        [JsonPropertyName("id")] // Asegura 'id' en minúscula en JSON
-        public string Id { get; set; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
 
-        [BsonElement("registrationType")]
         [JsonPropertyName("registrationType")]
-        public string RegistrationType { get; set; }
+        public string RegistrationType { get; set; } = string.Empty;
 
-        [BsonElement("house")]
-        [BsonRequired]
+        [Required]
         [JsonPropertyName("house")]
-        public string House { get; set; }
+        public string House { get; set; } = string.Empty;
 
-        [BsonElement("visitReason")]
-        [BsonRequired]
+        [Required]
         [JsonPropertyName("visitReason")]
-        public string VisitReason { get; set; }
+        public string VisitReason { get; set; } = string.Empty;
 
-        [BsonElement("visitorName")]
-        [BsonRequired]
+        [Required]
         [JsonPropertyName("visitorName")]
-        public string VisitorName { get; set; }
+        public string VisitorName { get; set; } = string.Empty;
 
-        [BsonElement("visitedPerson")]
-        [BsonRequired]
+        [Required]
         [JsonPropertyName("visitedPerson")]
-        public string VisitedPerson { get; set; }
+        public string VisitedPerson { get; set; } = string.Empty;
 
-        [BsonElement("guard")]
-        [BsonRequired]
+        [Required]
         [JsonPropertyName("guard")]
-        public string Guard { get; set; }
+        public string Guard { get; set; } = string.Empty;
 
-        [BsonElement("comments")]
         [JsonPropertyName("comments")]
         public string? Comments { get; set; }
 
-        [BsonElement("folio")]
         [JsonPropertyName("folio")]
         public string? Folio { get; set; }
 
-        [BsonElement("entryTimestamp")]
-        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         [JsonPropertyName("entryTimestamp")]
         public DateTime EntryTimestamp { get; set; }
 
-        [BsonElement("plates")]
         [JsonPropertyName("plates")]
         public string? Plates { get; set; }
 
-        [BsonElement("brand")]
         [JsonPropertyName("brand")]
         public string? Brand { get; set; }
 
-        [BsonElement("color")]
         [JsonPropertyName("color")]
         public string? Color { get; set; }
 
-        [BsonElement("createdAt")]
-        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
 
-        [BsonElement("updatedAt")]
-        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         [JsonPropertyName("updatedAt")]
         public DateTime UpdatedAt { get; set; }
         
-        [BsonElement("status")] 
         [JsonPropertyName("status")]
-        public string? Status { get; set; } 
+        public string? Status { get; set; }
 
-        public Registration() {}
+        public Registration() 
+        {
+            CreatedAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
+            EntryTimestamp = DateTime.UtcNow;
+        }
     }
 }

@@ -63,7 +63,7 @@ namespace MicroJack.API.Routes.Modules
                         VisitorName = request.VisitorName,
                         Brand = request.Brand,
                         Color = request.Color,
-                        CotoId = request.CotoId,
+                        CotoId = request.CotoId.ToString(),
                         CotoName = coto.Name,
                         HouseNumber = request.HouseNumber,
                         HousePhone = housePhone,

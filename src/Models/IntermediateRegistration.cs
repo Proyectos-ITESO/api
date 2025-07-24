@@ -1,84 +1,68 @@
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace MicroJack.API.Models
 {
     public class IntermediateRegistration
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [JsonPropertyName("id")]
-        public string Id { get; set; }
+        public int Id { get; set; }
 
-        [BsonElement("plates")]
-        [BsonRequired]
+        [Required]
         [JsonPropertyName("plates")]
-        public string Plates { get; set; }
+        public string Plates { get; set; } = string.Empty;
 
-        [BsonElement("visitorName")]
         [JsonPropertyName("visitorName")]
         public string? VisitorName { get; set; }
 
-        [BsonElement("brand")]
         [JsonPropertyName("brand")]
         public string? Brand { get; set; }
 
-        [BsonElement("color")]
         [JsonPropertyName("color")]
         public string? Color { get; set; }
 
-        [BsonElement("cotoId")]
         [JsonPropertyName("cotoId")]
-        public int CotoId { get; set; }
+        public string CotoId { get; set; } = string.Empty;
 
-        [BsonElement("cotoName")]
         [JsonPropertyName("cotoName")]
-        public string CotoName { get; set; }
+        public string CotoName { get; set; } = string.Empty;
 
-        [BsonElement("houseNumber")]
         [JsonPropertyName("houseNumber")]
-        public string HouseNumber { get; set; }
+        public string HouseNumber { get; set; } = string.Empty;
 
-        [BsonElement("housePhone")]
         [JsonPropertyName("housePhone")]
-        public string HousePhone { get; set; }
+        public string HousePhone { get; set; } = string.Empty;
 
-        [BsonElement("arrivalDateTime")]
-        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         [JsonPropertyName("arrivalDateTime")]
         public DateTime? ArrivalDateTime { get; set; }
 
-        [BsonElement("personVisited")]
         [JsonPropertyName("personVisited")]
         public string? PersonVisited { get; set; }
 
-        [BsonElement("status")]
         [JsonPropertyName("status")]
         public string Status { get; set; } = "AWAITING_APPROVAL";
 
-        [BsonElement("whatsappSent")]
         [JsonPropertyName("whatsappSent")]
         public bool WhatsappSent { get; set; } = false;
 
-        [BsonElement("whatsappSentAt")]
-        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         [JsonPropertyName("whatsappSentAt")]
         public DateTime? WhatsappSentAt { get; set; }
 
-        [BsonElement("approvalToken")]
         [JsonPropertyName("approvalToken")]
         public string? ApprovalToken { get; set; }
 
-        [BsonElement("approvedAt")]
-        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         [JsonPropertyName("approvedAt")]
         public DateTime? ApprovedAt { get; set; }
 
-        [BsonElement("createdAt")]
-        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         [JsonPropertyName("createdAt")]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
+
+        public IntermediateRegistration()
+        {
+            CreatedAt = DateTime.UtcNow;
+        }
     }
 }

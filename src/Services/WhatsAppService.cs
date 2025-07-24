@@ -4,6 +4,7 @@ using OpenQA.Selenium.Support.UI;
 using WebDriverManager;
 using WebDriverManager.DriverConfigs.Impl;
 using MicroJack.API.Services.Interfaces;
+using System.Net.Sockets;
 
 namespace MicroJack.API.Services
 {
@@ -19,6 +20,15 @@ namespace MicroJack.API.Services
         public async Task<bool> SendApprovalWhatsAppAsync(string phoneNumber, string approvalToken, string visitorName, string plates)
         {
             _logger.LogInformation("Sending WhatsApp approval to {Phone} for visitor {Visitor}", phoneNumber, visitorName);
+            
+            // Check network connectivity first
+            bool hasInternet = await CheckInternetConnectivityAsync();
+            if (!hasInternet)
+            {
+                _logger.LogWarning("No internet connection detected. WhatsApp service will work in offline mode.");
+                LogOfflineApprovalInstructions(phoneNumber, approvalToken, visitorName, plates);
+                return false; // Return false but gracefully handle the offline state
+            }
             
             // Try Flatpak direct method first (more reliable than Selenium)
             try
@@ -63,6 +73,12 @@ namespace MicroJack.API.Services
             }
             catch (Exception flatpakEx)
             {
+                if (IsNetworkException(flatpakEx))
+                {
+                    _logger.LogWarning("Network error in Flatpak method for {Phone}. Trying offline fallback.", phoneNumber);
+                    LogOfflineApprovalInstructions(phoneNumber, approvalToken, visitorName, plates);
+                    return false;
+                }
                 _logger.LogError(flatpakEx, "Flatpak method failed for {Phone}: {Error}", phoneNumber, flatpakEx.Message);
                 
                 // Try alternative method with xdg-open
@@ -449,6 +465,90 @@ namespace MicroJack.API.Services
                     _logger.LogWarning(ex, "Error disposing WebDriver");
                 }
             }
+        }
+
+        private async Task<bool> CheckInternetConnectivityAsync()
+        {
+            try
+            {
+                using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromSeconds(5);
+                
+                // Try multiple reliable endpoints
+                var endpoints = new[]
+                {
+                    "https://www.google.com",
+                    "https://1.1.1.1",
+                    "https://8.8.8.8"
+                };
+
+                foreach (var endpoint in endpoints)
+                {
+                    try
+                    {
+                        var response = await client.GetAsync(endpoint);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            _logger.LogDebug("Internet connectivity confirmed via {Endpoint}", endpoint);
+                            return true;
+                        }
+                    }
+                    catch (HttpRequestException)
+                    {
+                        _logger.LogDebug("Failed to connect to {Endpoint}", endpoint);
+                        continue;
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        _logger.LogDebug("Timeout connecting to {Endpoint}", endpoint);
+                        continue;
+                    }
+                }
+
+                _logger.LogWarning("No internet connectivity detected after testing multiple endpoints");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking internet connectivity");
+                return false;
+            }
+        }
+
+        private bool IsNetworkException(Exception ex)
+        {
+            return ex is HttpRequestException ||
+                   ex is SocketException ||
+                   ex is TaskCanceledException ||
+                   ex.Message.Contains("network", StringComparison.OrdinalIgnoreCase) ||
+                   ex.Message.Contains("internet", StringComparison.OrdinalIgnoreCase) ||
+                   ex.Message.Contains("connection", StringComparison.OrdinalIgnoreCase) ||
+                   ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
+                   ex.Message.Contains("dns", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void LogOfflineApprovalInstructions(string phoneNumber, string approvalToken, string visitorName, string plates)
+        {
+            var approvalUrl = $"http://localhost:5173/approve/{approvalToken}";
+            var message = $"🚗 *SOLICITUD DE ACCESO*\n\n" +
+                         $"Visitante: *{visitorName}*\n" +
+                         $"Placas: *{plates}*\n\n" +
+                         $"Para autorizar el acceso, haga clic en el siguiente enlace:\n" +
+                         $"{approvalUrl}\n\n" +
+                         $"_Este enlace es válido por 24 horas._";
+
+            var cleanPhone = phoneNumber.Replace("+", "").Replace(" ", "").Replace("-", "");
+            var whatsappUrl = $"https://wa.me/{cleanPhone}?text={Uri.EscapeDataString(message)}";
+
+            _logger.LogWarning("🌐 MODO OFFLINE - WhatsApp no pudo enviarse automáticamente");
+            _logger.LogInformation("📱 INSTRUCCIONES MANUALES:");
+            _logger.LogInformation("Teléfono: {Phone}", phoneNumber);
+            _logger.LogInformation("Visitante: {Visitor}", visitorName);
+            _logger.LogInformation("Placas: {Plates}", plates);
+            _logger.LogInformation("Link de aprobación: {ApprovalUrl}", approvalUrl);
+            _logger.LogInformation("URL de WhatsApp (copiar y abrir en navegador cuando haya internet): {WhatsAppUrl}", whatsappUrl);
+            _logger.LogInformation("Mensaje a enviar manualmente:");
+            _logger.LogInformation("{Message}", message);
         }
     }
 }

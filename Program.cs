@@ -1,9 +1,9 @@
-// Program.cs - MicroJack.API
-using Microsoft.Extensions.Options;
-using MicroJack.API.Models;
+using Microsoft.EntityFrameworkCore;
+using MicroJack.API.Data;
 using MicroJack.API.Services;
 using MicroJack.API.Services.Interfaces;
 using MicroJack.API.Routes;
+using MicroJack.API.Models.Catalog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,16 +16,48 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.AddDebug();
 });
 
-// Cargar configuración de MongoDbSettings desde appsettings.json
-builder.Services.Configure<MongoDbSettings>(
-    builder.Configuration.GetSection("MongoDbSettings"));
+// Configurar SQLite encriptado con Entity Framework Core
+var dbKey = MicroJack.API.Services.EncryptionService.GetOrCreateDatabaseKey();
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? $"Data Source=microjack.db;Password={dbKey}";
 
-// Registrar servicios de MongoDB
-builder.Services.AddSingleton<IMongoService, BaseMongoService>();
-builder.Services.AddSingleton<IRegistrationService, RegistrationService>();
-builder.Services.AddSingleton<IPreRegistrationService, PreRegistrationService>();
-builder.Services.AddSingleton<IIntermediateRegistrationService, IntermediateRegistrationService>();
-builder.Services.AddSingleton<IWhatsAppService, WhatsAppService>();
+// Agregar la clave de encriptación si no está presente
+if (!connectionString.Contains("Password="))
+{
+    connectionString += $";Password={dbKey}";
+}
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(connectionString));
+
+// Registrar servicios con Entity Framework Core
+
+// Legacy services (mantener por compatibilidad)
+builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+builder.Services.AddScoped<IPreRegistrationService, PreRegistrationService>();
+builder.Services.AddScoped<IIntermediateRegistrationService, IntermediateRegistrationService>();
+
+// Core entity services
+builder.Services.AddScoped<IGuardService, GuardService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<IVisitorService, VisitorService>();
+builder.Services.AddScoped<IVehicleService, VehicleService>();
+
+// Catalog services
+builder.Services.AddScoped<ICatalogService<VehicleBrand>, VehicleBrandService>();
+builder.Services.AddScoped<ICatalogService<VehicleColor>, VehicleColorService>();
+builder.Services.AddScoped<ICatalogService<VehicleType>, VehicleTypeService>();
+builder.Services.AddScoped<ICatalogService<VisitReason>, VisitReasonService>();
+
+// Transaction services
+builder.Services.AddScoped<IAccessLogService, AccessLogService>();
+builder.Services.AddScoped<IEventLogService, EventLogService>();
+
+// Other services
+builder.Services.AddScoped<IPhidgetService, PhidgetService>();
+builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
+builder.Services.AddScoped<DatabaseInitializationService>();
 
 // Configurar CORS
 var corsSettings = builder.Configuration.GetSection("CorsSettings");
@@ -58,6 +90,14 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// Crear la base de datos y aplicar migraciones automáticamente
+using (var scope = app.Services.CreateScope())
+{
+    var dbInitService = scope.ServiceProvider.GetRequiredService<DatabaseInitializationService>();
+    await dbInitService.InitializeAsync();
+    app.Logger.LogInformation("Base de datos SQLite inicializada con datos de catálogo");
+}
 
 // --- 2. Configuración del Pipeline HTTP ---
 

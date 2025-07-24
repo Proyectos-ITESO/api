@@ -1,6 +1,5 @@
 // Routes/Modules/RegistrationRoutes.cs
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
 using MicroJack.API.Models;
 using MicroJack.API.Services.Interfaces;
 
@@ -90,16 +89,12 @@ namespace MicroJack.API.Routes.Modules
 
         private static void ConfigureGetRegistrationById(RouteGroupBuilder group)
         {
-            group.MapGet("/{id}", async (
+            group.MapGet("/{id:int}", async (
                 IRegistrationService registrationService, 
                 ILogger<Program> logger, 
-                string id) =>
+                int id) =>
             {
                 logger.LogInformation("Recibida solicitud GET /api/registrations/{Id}", id);
-                if (!ObjectId.TryParse(id, out _))
-                {
-                    return Results.BadRequest("El ID proporcionado no es un ObjectId válido.");
-                }
                 
                 try
                 {

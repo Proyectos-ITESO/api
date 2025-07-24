@@ -1,24 +1,24 @@
-using MongoDB.Driver;
-using MongoDB.Bson;
+using Microsoft.EntityFrameworkCore;
 using MicroJack.API.Models;
 using MicroJack.API.Services.Interfaces;
+using MicroJack.API.Data;
 
 namespace MicroJack.API.Services
 {
     public class IntermediateRegistrationService : IIntermediateRegistrationService
     {
-        private readonly IMongoCollection<IntermediateRegistration> _intermediateRegistrationsCollection;
+        private readonly ApplicationDbContext _context;
         private readonly IPreRegistrationService _preRegistrationService;
         private readonly ILogger<IntermediateRegistrationService> _logger;
 
         public IntermediateRegistrationService(
-            IMongoService mongoService, 
+            ApplicationDbContext context, 
             IPreRegistrationService preRegistrationService,
             ILogger<IntermediateRegistrationService> logger)
         {
-            _logger = logger;
-            _intermediateRegistrationsCollection = mongoService.Database.GetCollection<IntermediateRegistration>("intermediateregistrations");
+            _context = context;
             _preRegistrationService = preRegistrationService;
+            _logger = logger;
         }
 
         public async Task<IntermediateRegistration> CreateIntermediateRegistrationAsync(IntermediateRegistration registration)
@@ -27,16 +27,16 @@ namespace MicroJack.API.Services
             registration.Status = "AWAITING_APPROVAL";
             registration.ApprovalToken = Guid.NewGuid().ToString();
             
-            if (string.IsNullOrEmpty(registration.Id))
-            {
-                registration.Id = ObjectId.GenerateNewId().ToString();
-            }
+            // Entity Framework will auto-generate the ID
+            registration.Id = 0;
 
             _logger.LogInformation("Creating intermediate registration for plates: {Plates}", registration.Plates);
             
             try
             {
-                await _intermediateRegistrationsCollection.InsertOneAsync(registration);
+                _context.IntermediateRegistrations.Add(registration);
+                await _context.SaveChangesAsync();
+                
                 _logger.LogInformation("Intermediate registration created: ID={Id}, Token={Token}", 
                     registration.Id, registration.ApprovalToken);
                 return registration;
@@ -57,8 +57,8 @@ namespace MicroJack.API.Services
             
             try
             {
-                var filter = Builders<IntermediateRegistration>.Filter.Eq(ir => ir.ApprovalToken, token);
-                return await _intermediateRegistrationsCollection.Find(filter).FirstOrDefaultAsync();
+                return await _context.IntermediateRegistrations
+                    .FirstOrDefaultAsync(ir => ir.ApprovalToken == token);
             }
             catch (Exception ex)
             {
@@ -96,12 +96,9 @@ namespace MicroJack.API.Services
                     _logger.LogWarning("Pre-registration already exists for plates: {Plates}. Marking intermediate as approved.", intermediate.Plates);
                     
                     // Update intermediate status to approved without creating duplicate
-                    var updateFilter = Builders<IntermediateRegistration>.Filter.Eq(ir => ir.ApprovalToken, token);
-                    var updateOnly = Builders<IntermediateRegistration>.Update
-                        .Set(ir => ir.Status, "APPROVED")
-                        .Set(ir => ir.ApprovedAt, DateTime.UtcNow);
-
-                    await _intermediateRegistrationsCollection.UpdateOneAsync(updateFilter, updateOnly);
+                    intermediate.Status = "APPROVED";
+                    intermediate.ApprovedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
                     return true;
                 }
 
@@ -121,15 +118,12 @@ namespace MicroJack.API.Services
                 await _preRegistrationService.CreatePreRegistrationAsync(preRegistration);
 
                 // Update intermediate status
-                var filter = Builders<IntermediateRegistration>.Filter.Eq(ir => ir.ApprovalToken, token);
-                var update = Builders<IntermediateRegistration>.Update
-                    .Set(ir => ir.Status, "APPROVED")
-                    .Set(ir => ir.ApprovedAt, DateTime.UtcNow);
-
-                var result = await _intermediateRegistrationsCollection.UpdateOneAsync(filter, update);
+                intermediate.Status = "APPROVED";
+                intermediate.ApprovedAt = DateTime.UtcNow;
+                var changeCount = await _context.SaveChangesAsync();
                 
                 _logger.LogInformation("Intermediate registration approved and converted to pre-registration. Token: {Token}", token);
-                return result.ModifiedCount > 0;
+                return changeCount > 0;
             }
             catch (Exception ex)
             {
@@ -144,9 +138,10 @@ namespace MicroJack.API.Services
             
             try
             {
-                var filter = Builders<IntermediateRegistration>.Filter.Eq(ir => ir.Status, "AWAITING_APPROVAL");
-                var sort = Builders<IntermediateRegistration>.Sort.Descending(ir => ir.CreatedAt);
-                return await _intermediateRegistrationsCollection.Find(filter).Sort(sort).ToListAsync();
+                return await _context.IntermediateRegistrations
+                    .Where(ir => ir.Status == "AWAITING_APPROVAL")
+                    .OrderByDescending(ir => ir.CreatedAt)
+                    .ToListAsync();
             }
             catch (Exception ex)
             {

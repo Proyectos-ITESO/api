@@ -1,4 +1,3 @@
-// Services/Interfaces/IPreRegistrationService.cs
 using MicroJack.API.Models;
 
 namespace MicroJack.API.Services.Interfaces
@@ -8,6 +7,6 @@ namespace MicroJack.API.Services.Interfaces
         Task<PreRegistration> CreatePreRegistrationAsync(PreRegistration newPreRegistration);
         Task<PreRegistration?> GetPendingPreRegistrationByPlateAsync(string plate);
         Task<List<PreRegistration>> GetPreRegistrationsAsync(string? searchTerm = null);
-        Task<bool> UpdatePreRegistrationStatusAsync(string id, string newStatus);
+        Task<bool> UpdatePreRegistrationStatusAsync(int id, string newStatus);
     }
 }

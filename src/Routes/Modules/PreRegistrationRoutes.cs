@@ -1,6 +1,5 @@
 // Routes/Modules/PreRegistrationRoutes.cs
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
 using MicroJack.API.Models;
 using MicroJack.API.Services.Interfaces;
 
@@ -127,10 +126,10 @@ namespace MicroJack.API.Routes.Modules
 
         private static void ConfigureUpdatePreRegistrationStatus(RouteGroupBuilder group)
         {
-            group.MapPatch("/{id}/status", async (
+            group.MapPatch("/{id:int}/status", async (
                 IPreRegistrationService preRegistrationService, 
                 ILogger<Program> logger, 
-                string id, 
+                int id, 
                 [FromBody] UpdateStatusRequest request) =>
             {
                 logger.LogInformation("Recibida solicitud PATCH /api/preregistrations/{Id}/status a '{NewStatus}'", 
@@ -139,11 +138,6 @@ namespace MicroJack.API.Routes.Modules
                 if (string.IsNullOrWhiteSpace(request?.NewStatus))
                 {
                     return Results.BadRequest("El campo 'newStatus' es requerido.");
-                }
-                
-                if (!ObjectId.TryParse(id, out _))
-                {
-                    return Results.BadRequest("El ID proporcionado no es un ObjectId válido.");
                 }
 
                 try
