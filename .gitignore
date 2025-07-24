@@ -1,3 +1,51 @@
+# Build output directories
 obj/
 bin/
-.idea
+
+# IDE and Editor files
+.idea/
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build artifacts and compiled files
+*.dll
+*.exe
+*.pdb
+*.cache
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# NuGet packages and restore
+packages/
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Database files (comment out if you want to track SQLite DB)
+*.db
+*.db-shm
+*.db-wal
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Application specific
+microjack.db*
+encryption_key.txt
