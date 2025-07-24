@@ -7,5 +7,7 @@ namespace MicroJack.API.Services.Interfaces
         Task<List<Registration>> GetRegistrationsAsync(string? plate = null);
         Task<Registration?> GetRegistrationByIdAsync(int id);
         Task<Registration> CreateRegistrationAsync(Registration newRegistration);
+        Task<Registration?> UpdateRegistrationAsync(int id, Registration registration);
+        Task<bool> DeleteRegistrationAsync(int id);
     }
 }

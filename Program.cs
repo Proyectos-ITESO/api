@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using System.Text;
 using MicroJack.API.Data;
 using MicroJack.API.Services;
@@ -53,12 +54,31 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(key),
         ValidateIssuer = false,
         ValidateAudience = false,
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+        RoleClaimType = ClaimTypes.Role,
+        NameClaimType = "Username"
     };
 });
 
-// Add Authorization services
-builder.Services.AddAuthorization();
+// Add Authorization services with policies
+builder.Services.AddAuthorization(options =>
+{
+    // Admin-only policies
+    options.AddPolicy("AdminOnly", policy => 
+        policy.RequireRole("Admin", "SuperAdmin"));
+    
+    // Guard-level policies (can access basic operations)
+    options.AddPolicy("GuardLevel", policy =>
+        policy.RequireRole("Guard", "Admin", "SuperAdmin"));
+    
+    // Super Admin only
+    options.AddPolicy("SuperAdminOnly", policy =>
+        policy.RequireRole("SuperAdmin"));
+    
+    // Management operations (Admin or SuperAdmin)
+    options.AddPolicy("ManagementLevel", policy =>
+        policy.RequireRole("Admin", "SuperAdmin"));
+});
 
 // Registrar servicios con Entity Framework Core
 
@@ -73,6 +93,7 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IVisitorService, VisitorService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddScoped<IResidentService, ResidentService>();
 
 // Catalog services
 builder.Services.AddScoped<ICatalogService<VehicleBrand>, VehicleBrandService>();
@@ -155,7 +176,6 @@ app.UseCors();
 // Enable Authentication and Authorization
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCustomAuthorization();
 
 // --- 3. Configuración de Rutas ---
 app.Logger.LogInformation("Configurando endpoints...");

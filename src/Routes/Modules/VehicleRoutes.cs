@@ -24,7 +24,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error getting vehicles", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.ViewVehicles))
+            .RequireAuthorization("GuardLevel")
             .WithName("GetAllVehicles")
             .Produces<object>(200);
 
@@ -44,7 +44,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error getting vehicle", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.ViewVehicles))
+            .RequireAuthorization()
             .WithName("GetVehicleById")
             .Produces<object>(200)
             .Produces(404);
@@ -65,7 +65,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error getting vehicle", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.ViewVehicles))
+            .RequireAuthorization()
             .WithName("GetVehicleByPlate")
             .Produces<object>(200)
             .Produces(404);
@@ -92,7 +92,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error creating vehicle", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.CreateVehicle))
+            .RequireAuthorization("ManagementLevel")
             .WithName("CreateVehicle")
             .Produces<object>(201)
             .Produces(500);
@@ -122,7 +122,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error updating vehicle", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.UpdateVehicle))
+            .RequireAuthorization()
             .WithName("UpdateVehicle")
             .Produces<object>(200)
             .Produces(404);
@@ -143,7 +143,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error deleting vehicle", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.DeleteVehicle))
+            .RequireAuthorization()
             .WithName("DeleteVehicle")
             .Produces<object>(200)
             .Produces(404);

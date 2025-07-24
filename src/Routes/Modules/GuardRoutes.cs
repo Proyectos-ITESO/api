@@ -11,7 +11,7 @@ namespace MicroJack.API.Routes.Modules
         {
             var guardGroup = app.MapGroup("/api/guards").WithTags("Guards");
 
-            // GET all guards
+            // GET all guards (Admin only)
             guardGroup.MapGet("/", async (IGuardService guardService) =>
             {
                 try
@@ -24,7 +24,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error getting guards", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.ViewGuards))
+            .RequireAuthorization("AdminOnly")
             .WithName("GetAllGuards")
             .Produces<object>(200);
 
@@ -44,7 +44,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error getting guard", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.ViewGuards))
+            .RequireAuthorization("AdminOnly")
             .WithName("GetGuardById")
             .Produces<object>(200)
             .Produces(404);
@@ -69,7 +69,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error creating guard", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.CreateGuard))
+            .RequireAuthorization("SuperAdminOnly")
             .WithName("CreateGuard")
             .Produces<object>(201)
             .Produces(500);
@@ -99,7 +99,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error updating guard", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.UpdateGuard))
+            .RequireAuthorization("AdminOnly")
             .WithName("UpdateGuard")
             .Produces<object>(200)
             .Produces(404);
@@ -120,7 +120,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error deleting guard", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.DeleteGuard))
+            .RequireAuthorization("SuperAdminOnly")
             .WithName("DeleteGuard")
             .Produces<object>(200)
             .Produces(404);

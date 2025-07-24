@@ -89,5 +89,64 @@ namespace MicroJack.API.Services
                 throw new ApplicationException("Error inesperado al crear el registro.", ex);
             }
         }
+
+        public async Task<Registration?> UpdateRegistrationAsync(int id, Registration registration)
+        {
+            try
+            {
+                var existingRegistration = await _context.Registrations.FindAsync(id);
+                if (existingRegistration == null)
+                {
+                    _logger.LogWarning("Registro no encontrado para actualizar: ID={Id}", id);
+                    return null;
+                }
+
+                // Update properties
+                existingRegistration.RegistrationType = registration.RegistrationType;
+                existingRegistration.House = registration.House;
+                existingRegistration.VisitReason = registration.VisitReason;
+                existingRegistration.VisitorName = registration.VisitorName;
+                existingRegistration.VisitedPerson = registration.VisitedPerson;
+                existingRegistration.Guard = registration.Guard;
+                existingRegistration.Comments = registration.Comments;
+                existingRegistration.Plates = registration.Plates;
+                existingRegistration.Brand = registration.Brand;
+                existingRegistration.Color = registration.Color;
+                existingRegistration.Status = registration.Status;
+                existingRegistration.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Registro actualizado exitosamente: ID={Id}", id);
+                return existingRegistration;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inesperado al actualizar registro con ID={Id}", id);
+                throw new ApplicationException("Error inesperado al actualizar el registro.", ex);
+            }
+        }
+
+        public async Task<bool> DeleteRegistrationAsync(int id)
+        {
+            try
+            {
+                var registration = await _context.Registrations.FindAsync(id);
+                if (registration == null)
+                {
+                    _logger.LogWarning("Registro no encontrado para eliminar: ID={Id}", id);
+                    return false;
+                }
+
+                _context.Registrations.Remove(registration);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Registro eliminado exitosamente: ID={Id}", id);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inesperado al eliminar registro con ID={Id}", id);
+                throw new ApplicationException("Error inesperado al eliminar el registro.", ex);
+            }
+        }
     }
 }

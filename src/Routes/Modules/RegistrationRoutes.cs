@@ -15,6 +15,8 @@ namespace MicroJack.API.Routes.Modules
             ConfigureGetRegistrations(registrationsApiGroup);
             ConfigureCreateRegistration(registrationsApiGroup);
             ConfigureGetRegistrationById(registrationsApiGroup);
+            ConfigureUpdateRegistration(registrationsApiGroup);
+            ConfigureDeleteRegistration(registrationsApiGroup);
         }
 
         private static void ConfigureGetRegistrations(RouteGroupBuilder group)
@@ -133,6 +135,84 @@ namespace MicroJack.API.Routes.Modules
                 return false;
             }
             return true;
+        }
+
+        private static void ConfigureUpdateRegistration(RouteGroupBuilder group)
+        {
+            group.MapPut("/{id:int}", async (
+                int id,
+                Registration registration,
+                IRegistrationService registrationService,
+                ILogger<Program> logger) =>
+            {
+                logger.LogInformation("Recibida solicitud PUT /api/registrations/{Id}", id);
+                
+                if (!ValidateRegistration(registration, logger))
+                {
+                    return Results.ValidationProblem(new Dictionary<string, string[]>
+                    {
+                        { "RequestBody", new[] { "Faltan campos requeridos (registrationType, house, visitReason, visitorName, visitedPerson, status)." } }
+                    });
+                }
+
+                try
+                {
+                    var updatedRegistration = await registrationService.UpdateRegistrationAsync(id, registration);
+                    if (updatedRegistration == null)
+                    {
+                        logger.LogWarning("Registro no encontrado para actualizar con ID: {Id}", id);
+                        return Results.NotFound(new { message = $"Registro con ID {id} no encontrado." });
+                    }
+
+                    logger.LogInformation("Registro actualizado exitosamente con ID {Id}", id);
+                    return Results.Ok(updatedRegistration);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error procesando PUT /api/registrations/{Id}", id);
+                    return Results.Problem("Ocurrió un error al actualizar el registro.",
+                        statusCode: StatusCodes.Status500InternalServerError);
+                }
+            })
+            .WithName("UpdateRegistration")
+            .Produces<Registration>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
+        }
+
+        private static void ConfigureDeleteRegistration(RouteGroupBuilder group)
+        {
+            group.MapDelete("/{id:int}", async (
+                int id,
+                IRegistrationService registrationService,
+                ILogger<Program> logger) =>
+            {
+                logger.LogInformation("Recibida solicitud DELETE /api/registrations/{Id}", id);
+
+                try
+                {
+                    var result = await registrationService.DeleteRegistrationAsync(id);
+                    if (!result)
+                    {
+                        logger.LogWarning("Registro no encontrado para eliminar con ID: {Id}", id);
+                        return Results.NotFound(new { message = $"Registro con ID {id} no encontrado." });
+                    }
+
+                    logger.LogInformation("Registro eliminado exitosamente con ID {Id}", id);
+                    return Results.Ok(new { message = "Registro eliminado exitosamente." });
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error procesando DELETE /api/registrations/{Id}", id);
+                    return Results.Problem("Ocurrió un error al eliminar el registro.",
+                        statusCode: StatusCodes.Status500InternalServerError);
+                }
+            })
+            .WithName("DeleteRegistration")
+            .Produces<object>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
         }
     }
 }

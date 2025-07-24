@@ -24,7 +24,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error getting addresses", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.ViewAddresses))
+            .RequireAuthorization()
             .WithName("GetAllAddresses")
             .Produces<object>(200);
 
@@ -44,7 +44,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error getting address", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.ViewAddresses))
+            .RequireAuthorization()
             .WithName("GetAddressById")
             .Produces<object>(200)
             .Produces(404);
@@ -69,7 +69,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error creating address", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.CreateAddress))
+            .RequireAuthorization()
             .WithName("CreateAddress")
             .Produces<object>(201)
             .Produces(500);
@@ -97,7 +97,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error updating address", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.UpdateAddress))
+            .RequireAuthorization()
             .WithName("UpdateAddress")
             .Produces<object>(200)
             .Produces(404);
@@ -118,7 +118,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error deleting address", detail: ex.Message, statusCode: 500);
                 }
             })
-            .WithMetadata(new RequiresPermissionAttribute(Permission.DeleteAddress))
+            .RequireAuthorization()
             .WithName("DeleteAddress")
             .Produces<object>(200)
             .Produces(404);
