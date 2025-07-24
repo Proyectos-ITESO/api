@@ -49,6 +49,7 @@ extract_token() {
 echo ""
 echo "🗑️  Step 1: Delete existing database"
 rm -f /home/emfr/chambas/Insano/realGforLife/api/microjack.db
+sleep 1 # Give filesystem time to process deletion
 echo "✅ Database deleted successfully"
 
 echo ""
@@ -177,7 +178,7 @@ fi
 echo ""
 echo "🏠 Step 7: Test Address Management"
 echo "7.1 - Create Address"
-address_data='{"identifier":"Casa 123", "status": "Active", "message": "Test message"}'
+address_data='{"identifier":"Casa-$(date +%s)", "status": "Active", "message": "Test message"}'
 create_address_response=$(api_call POST "/api/addresses" "$address_data" "auth")
 echo "$create_address_response" | jq .
 if echo "$create_address_response" | jq -e '.success' > /dev/null; then
@@ -300,10 +301,10 @@ fi
 
 echo ""
 echo "12.2 - Test PreRegistration endpoint"
-prereg_data='{"fullName":"PreReg Test","email":"prereg@test.com","phone":"555-8888"}'  
+prereg_data="{\"plates\":\"PREREG-$(date +%s)\",\"visitorName\":\"PreReg Test\",\"brand\":\"Nissan\",\"color\":\"Blue\",\"houseVisited\":\"Coto Los Pinos - Casa 2\",\"arrivalDateTime\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"personVisited\":\"John Doe\",\"status\":\"PENDIENTE\"}"  
 prereg_response=$(api_call POST "/api/preregistrations" "$prereg_data")
 echo "$prereg_response" | jq .
-if echo "$prereg_response" | jq -e '.success' > /dev/null; then
+if echo "$prereg_response" | jq -e '.id' > /dev/null; then
     echo "✅ Legacy PreRegistration: PASSED"
 else
     echo "❌ Legacy PreRegistration: FAILED"

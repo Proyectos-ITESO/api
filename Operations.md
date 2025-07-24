@@ -243,8 +243,10 @@ This document lists **ALL** the functions and operations available in the MicroJ
 ### Resident Operations
 
 #### `GET /api/residents`
-**Purpose:** Get all residents
+**Purpose:** Get all residents with optional search filter
 **Authorization:** GuardLevel required
+**Query Parameters:**
+- `search` (optional): Filter residents by full name or address identifier.
 **Response:**
 ```json
 {
@@ -396,7 +398,7 @@ This document lists **ALL** the functions and operations available in the MicroJ
 
 #### `POST /api/vehicles`
 **Purpose:** Create new vehicle
-**Authorization:** AdminLevel required
+**Authorization:** GuardLevel required
 **Request Body:**
 ```json
 {
@@ -973,7 +975,7 @@ This document lists **ALL** the functions and operations available in the MicroJ
 - `DELETE /api/addresses/{id}` - Delete address
 
 ### Resident Management (6 endpoints)
-- `GET /api/residents` - List all residents
+- `GET /api/residents` - List all residents (now with optional search)
 - `GET /api/residents/{id}` - Get resident by ID
 - `GET /api/residents/address/{addressId}` - Get residents by address
 - `POST /api/residents` - Create new resident
@@ -991,7 +993,7 @@ This document lists **ALL** the functions and operations available in the MicroJ
 - `GET /api/vehicles` - List all vehicles
 - `GET /api/vehicles/{id}` - Get vehicle by ID
 - `GET /api/vehicles/plate/{licensePlate}` - Get vehicle by plate
-- `POST /api/vehicles` - Create new vehicle
+- `POST /api/vehicles` - Create new vehicle (now GuardLevel)
 - `PUT /api/vehicles/{id}` - Update vehicle
 - `DELETE /api/vehicles/{id}` - Delete vehicle
 
