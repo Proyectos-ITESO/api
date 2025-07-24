@@ -63,21 +63,17 @@ builder.Services.AddAuthentication(options =>
 // Add Authorization services with policies
 builder.Services.AddAuthorization(options =>
 {
-    // Admin-only policies
-    options.AddPolicy("AdminOnly", policy => 
+    // Admin-level policies (Admin or SuperAdmin can access)
+    options.AddPolicy("AdminLevel", policy => 
         policy.RequireRole("Admin", "SuperAdmin"));
     
-    // Guard-level policies (can access basic operations)
+    // Guard-level policies (any authenticated user can access)
     options.AddPolicy("GuardLevel", policy =>
         policy.RequireRole("Guard", "Admin", "SuperAdmin"));
     
-    // Super Admin only
-    options.AddPolicy("SuperAdminOnly", policy =>
+    // Super Admin only (highest privilege level)
+    options.AddPolicy("SuperAdminLevel", policy =>
         policy.RequireRole("SuperAdmin"));
-    
-    // Management operations (Admin or SuperAdmin)
-    options.AddPolicy("ManagementLevel", policy =>
-        policy.RequireRole("Admin", "SuperAdmin"));
 });
 
 // Registrar servicios con Entity Framework Core

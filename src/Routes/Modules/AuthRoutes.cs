@@ -174,6 +174,54 @@ namespace MicroJack.API.Routes.Modules
             .Produces(400)
             .Produces(500);
 
+            // Health check endpoint (no auth required)
+            authGroup.MapGet("/health", async () =>
+            {
+                return Results.Ok(new 
+                { 
+                    success = true, 
+                    message = "Authentication service is healthy", 
+                    timestamp = DateTime.UtcNow,
+                    policies = new[]
+                    {
+                        "GuardLevel: Guard, Admin, SuperAdmin",
+                        "AdminLevel: Admin, SuperAdmin", 
+                        "SuperAdminLevel: SuperAdmin"
+                    }
+                });
+            })
+            .WithName("AuthHealthCheck")
+            .WithSummary("Check authentication service health and available policies")
+            .Produces(200);
+
+            // Debug endpoint to check users (temporary)
+            authGroup.MapGet("/debug/users", async (IGuardService guardService) =>
+            {
+                try
+                {
+                    var guards = await guardService.GetAllGuardsAsync();
+                    return Results.Ok(new
+                    {
+                        success = true,
+                        count = guards.Count(),
+                        users = guards.Select(g => new { 
+                            id = g.Id, 
+                            username = g.Username, 
+                            fullName = g.FullName, 
+                            isActive = g.IsActive,
+                            hasPassword = !string.IsNullOrEmpty(g.PasswordHash)
+                        })
+                    });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Error getting users", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .WithName("DebugUsers")
+            .WithSummary("Debug endpoint to check existing users")
+            .Produces(200);
+
             // Get current user info
             authGroup.MapGet("/me", async (IRoleService roleService, HttpContext context) =>
             {

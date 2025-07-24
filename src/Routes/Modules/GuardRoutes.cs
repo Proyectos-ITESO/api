@@ -11,7 +11,7 @@ namespace MicroJack.API.Routes.Modules
         {
             var guardGroup = app.MapGroup("/api/guards").WithTags("Guards");
 
-            // GET all guards (Admin only)
+            // GET all guards (Admin level required)
             guardGroup.MapGet("/", async (IGuardService guardService) =>
             {
                 try
@@ -24,7 +24,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error getting guards", detail: ex.Message, statusCode: 500);
                 }
             })
-            .RequireAuthorization("AdminOnly")
+            .RequireAuthorization("AdminLevel")
             .WithName("GetAllGuards")
             .Produces<object>(200);
 
@@ -44,12 +44,12 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error getting guard", detail: ex.Message, statusCode: 500);
                 }
             })
-            .RequireAuthorization("AdminOnly")
+            .RequireAuthorization("AdminLevel")
             .WithName("GetGuardById")
             .Produces<object>(200)
             .Produces(404);
 
-            // POST create new guard
+            // POST create new guard (Admin level required) 
             guardGroup.MapPost("/", async (GuardCreateRequest request, IGuardService guardService) =>
             {
                 try
@@ -69,7 +69,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error creating guard", detail: ex.Message, statusCode: 500);
                 }
             })
-            .RequireAuthorization("SuperAdminOnly")
+            .RequireAuthorization("AdminLevel")
             .WithName("CreateGuard")
             .Produces<object>(201)
             .Produces(500);
@@ -99,12 +99,12 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error updating guard", detail: ex.Message, statusCode: 500);
                 }
             })
-            .RequireAuthorization("AdminOnly")
+            .RequireAuthorization("AdminLevel")
             .WithName("UpdateGuard")
             .Produces<object>(200)
             .Produces(404);
 
-            // DELETE guard
+            // DELETE guard (SuperAdmin level required for destructive operations)
             guardGroup.MapDelete("/{id:int}", async (int id, IGuardService guardService) =>
             {
                 try
@@ -120,7 +120,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error deleting guard", detail: ex.Message, statusCode: 500);
                 }
             })
-            .RequireAuthorization("SuperAdminOnly")
+            .RequireAuthorization("SuperAdminLevel")
             .WithName("DeleteGuard")
             .Produces<object>(200)
             .Produces(404);
