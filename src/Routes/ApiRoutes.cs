@@ -14,6 +14,7 @@ namespace MicroJack.API.Routes
             app.MapGuardRoutes();
             app.MapAddressRoutes();
             app.MapVehicleRoutes();
+            app.MapCatalogRoutes();
             
             // Configurar las rutas de cada módulo legacy
             RegistrationRoutes.Configure(app);
