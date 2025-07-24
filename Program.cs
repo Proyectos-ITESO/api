@@ -166,6 +166,21 @@ if (app.Environment.IsDevelopment())
 // Redirección HTTPS
 app.UseHttpsRedirection();
 
+// Configure static file serving for uploads
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
+Directory.CreateDirectory(uploadsPath);
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads",
+    OnPrepareResponse = ctx =>
+    {
+        // Add cache headers for uploaded images
+        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=86400"); // 24 hours
+    }
+});
+
 // Habilitar CORS
 app.UseCors();
 

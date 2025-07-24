@@ -19,6 +19,11 @@ namespace MicroJack.API.Routes
             app.MapAccessLogRoutes();
             app.MapCatalogRoutes();
             
+            // Configure enhanced routes for frontend integration
+            app.MapUnifiedAccessRoutes();
+            app.MapFileUploadRoutes();
+            app.MapEventLogRoutes();
+            
             // Configurar las rutas de cada módulo legacy
             RegistrationRoutes.Configure(app);
             PreRegistrationRoutes.Configure(app);

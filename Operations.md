@@ -650,6 +650,273 @@ This document lists **ALL** the functions and operations available in the MicroJ
 
 ---
 
+## 🚀 Unified Access Control (Frontend Optimized)
+
+### Unified Entry Registration
+
+#### `POST /api/access/register-entry`
+**Purpose:** Register a complete entry with visitor, vehicle, and access log in one atomic operation
+**Authorization:** GuardLevel required
+**Request Body:**
+```json
+{
+  "visitor": {
+    "fullName": "María García",
+    "email": "maria@example.com",
+    "phone": "555-1234",
+    "identificationNumber": "12345678",
+    "identificationType": "DNI",
+    "ineImageUrl": "/uploads/ine/20250724_143022_a1b2c3d4.jpg",
+    "faceImageUrl": "/uploads/faces/20250724_143025_e5f6g7h8.jpg"
+  },
+  "vehicle": {
+    "licensePlate": "ABC123",
+    "plateImageUrl": "/uploads/plates/20250724_143030_i9j0k1l2.jpg",
+    "brandId": 1,
+    "colorId": 5,
+    "typeId": 2
+  },
+  "residentId": 3,
+  "purpose": "Family visit",
+  "entryTime": "2025-07-24T16:00:00Z",
+  "notes": "Regular visitor"
+}
+```
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Entry registered successfully",
+  "data": {
+    "accessLog": {
+      "id": 15,
+      "visitorId": 1,
+      "vehicleId": 1,
+      "residentId": 3,
+      "purpose": "Family visit",
+      "entryTime": "2025-07-24T16:00:00Z",
+      "isActive": true
+    },
+    "visitor": { "id": 1, "fullName": "María García", ... },
+    "vehicle": { "id": 1, "licensePlate": "ABC123", ... },
+    "resident": { "id": 3, "fullName": "Juan Resident", ... }
+  }
+}
+```
+
+#### `POST /api/access/register-exit/{accessLogId}`
+**Purpose:** Register visitor exit by access log ID
+**Authorization:** GuardLevel required
+**Parameters:** `accessLogId` (integer) - Access log ID
+**Request Body:**
+```json
+{
+  "exitTime": "2025-07-24T18:30:00Z",
+  "exitNotes": "Normal departure"
+}
+```
+
+#### `GET /api/access/active-visits`
+**Purpose:** Get summary of all currently active visits
+**Authorization:** GuardLevel required
+**Response:**
+```json
+{
+  "success": true,
+  "count": 3,
+  "data": [
+    {
+      "id": 15,
+      "visitorName": "María García",
+      "vehiclePlate": "ABC123",
+      "purpose": "Family visit",
+      "entryTime": "2025-07-24T16:00:00Z",
+      "minutesInside": 45
+    }
+  ]
+}
+```
+
+---
+
+## 📁 File Upload Management
+
+### Image Upload Operations
+
+#### `POST /api/upload/image`
+**Purpose:** Upload a single image file (face, INE, license plate, etc.)
+**Authorization:** GuardLevel required
+**Content-Type:** multipart/form-data
+**Form Fields:**
+- `file` (required): Image file (max 5MB, jpg/jpeg/png/gif/bmp)
+- `category` (optional): Category for organization (faces, ine, plates, general)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "File uploaded successfully",
+  "data": {
+    "fileName": "original_photo.jpg",
+    "savedFileName": "20250724_143022_a1b2c3d4.jpg",
+    "url": "/uploads/faces/20250724_143022_a1b2c3d4.jpg",
+    "category": "faces",
+    "size": 2048576,
+    "contentType": "image/jpeg",
+    "uploadedAt": "2025-07-24T14:30:22Z"
+  }
+}
+```
+
+#### `POST /api/upload/images`
+**Purpose:** Upload multiple image files at once (max 10 files)
+**Authorization:** GuardLevel required
+**Content-Type:** multipart/form-data
+**Form Fields:**
+- `files` (required): Array of image files
+- `category` (optional): Category for all files
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Uploaded 3 files successfully",
+  "data": {
+    "uploaded": [
+      {
+        "fileName": "photo1.jpg",
+        "savedFileName": "20250724_143022_a1b2c3d4.jpg",
+        "url": "/uploads/general/20250724_143022_a1b2c3d4.jpg",
+        "size": 1024768,
+        "contentType": "image/jpeg"
+      }
+    ],
+    "errors": [],
+    "category": "general",
+    "uploadedAt": "2025-07-24T14:30:22Z"
+  }
+}
+```
+
+#### `DELETE /api/upload/image`
+**Purpose:** Delete an uploaded file
+**Authorization:** AdminLevel required
+**Query Parameters:**
+- `fileUrl` (required): URL of file to delete
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "File deleted successfully",
+  "deletedUrl": "/uploads/faces/20250724_143022_a1b2c3d4.jpg"
+}
+```
+
+---
+
+## 📋 Event Log Management (Bitácora)
+
+### Event Log Operations
+
+#### `GET /api/eventlogs`
+**Purpose:** Get all event logs with optional filters
+**Authorization:** GuardLevel required
+**Query Parameters:**
+- `fromDate` (optional): Filter events from this date
+- `toDate` (optional): Filter events to this date  
+- `eventType` (optional): Filter by event type
+- `guardId` (optional): Filter by guard ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "count": 25,
+  "data": [
+    {
+      "id": 1,
+      "eventType": "Security",
+      "description": "Routine security check performed",
+      "severity": "Info",
+      "guardId": 1,
+      "timestamp": "2025-07-24T14:30:00Z",
+      "relatedEntityType": null,
+      "relatedEntityId": null,
+      "additionalData": null
+    }
+  ]
+}
+```
+
+#### `GET /api/eventlogs/{id}`
+**Purpose:** Get specific event log by ID
+**Authorization:** GuardLevel required
+**Parameters:** `id` (integer) - Event log ID
+
+#### `POST /api/eventlogs`
+**Purpose:** Create new event log entry
+**Authorization:** GuardLevel required
+**Request Body:**
+```json
+{
+  "eventType": "Security",
+  "description": "Unauthorized access attempt detected",
+  "severity": "Warning",
+  "relatedEntityType": "AccessLog",
+  "relatedEntityId": 15,
+  "additionalData": "{\"location\": \"Main gate\", \"camera\": \"CAM001\"}",
+  "timestamp": "2025-07-24T14:30:00Z"
+}
+```
+
+#### `GET /api/eventlogs/recent`
+**Purpose:** Get recent event logs (last 24 hours by default)
+**Authorization:** GuardLevel required
+**Query Parameters:**
+- `hours` (optional): Number of hours back (default: 24)
+
+#### `GET /api/eventlogs/type/{eventType}`
+**Purpose:** Get event logs filtered by event type
+**Authorization:** GuardLevel required
+**Parameters:** `eventType` (string) - Event type to filter
+
+#### `GET /api/eventlogs/severity/{severity}`
+**Purpose:** Get event logs filtered by severity level
+**Authorization:** GuardLevel required
+**Parameters:** `severity` (string) - Severity level (Info, Warning, Error, Critical)
+
+#### `POST /api/eventlogs/quick`
+**Purpose:** Create event log using predefined quick event types
+**Authorization:** GuardLevel required
+**Request Body:**
+```json
+{
+  "quickEventType": "shift_start",
+  "notes": "Started morning shift",
+  "additionalData": "{\"shift\": \"morning\", \"position\": \"main_gate\"}"
+}
+```
+
+**Available Quick Event Types:**
+- `shift_start` - Guard shift started
+- `shift_end` - Guard shift ended  
+- `security_check` - Routine security check
+- `maintenance` - Maintenance activity
+- `incident` - Security incident
+- `emergency` - Emergency situation
+- `visitor_issue` - Visitor access issue
+- `equipment_check` - Equipment status check
+- `gate_malfunction` - Gate malfunction
+- `unauthorized_access` - Unauthorized access attempt
+
+#### `DELETE /api/eventlogs/{id}`
+**Purpose:** Delete event log entry (admin only)
+**Authorization:** AdminLevel required
+**Parameters:** `id` (integer) - Event log ID
+
+---
+
 ## 🔧 Hardware Integration
 
 ### Phidget Test Endpoints
@@ -742,7 +1009,27 @@ This document lists **ALL** the functions and operations available in the MicroJ
 - `GET /api/catalogs/vehicle-types` - List vehicle types
 - `GET /api/catalogs/visit-reasons` - List visit reasons
 
-### Legacy Endpoints (8 endpoints)
+### **🚀 Unified Access Control (3 endpoints - FRONTEND OPTIMIZED)**
+- `POST /api/access/register-entry` - **Complete entry registration in one call**
+- `POST /api/access/register-exit/{accessLogId}` - **Register visitor exit**
+- `GET /api/access/active-visits` - **Get active visits summary**
+
+### **📁 File Upload Management (3 endpoints)**
+- `POST /api/upload/image` - **Upload single image (face, INE, plate)**
+- `POST /api/upload/images` - **Upload multiple images**
+- `DELETE /api/upload/image` - **Delete uploaded file**
+
+### **📋 Event Log Management (8 endpoints - BITÁCORA)**
+- `GET /api/eventlogs` - **List event logs with filters**
+- `GET /api/eventlogs/{id}` - **Get specific event log**
+- `POST /api/eventlogs` - **Create custom event log**
+- `GET /api/eventlogs/recent` - **Get recent events**
+- `GET /api/eventlogs/type/{eventType}` - **Filter by event type**
+- `GET /api/eventlogs/severity/{severity}` - **Filter by severity**
+- `POST /api/eventlogs/quick` - **Create quick event (10 predefined types)**
+- `DELETE /api/eventlogs/{id}` - **Delete event log**
+
+### Legacy Endpoints (11 endpoints)
 - `GET /api/registrations` - List legacy registrations
 - `GET /api/registrations/{id}` - Get legacy registration
 - `POST /api/registrations` - Create legacy registration
@@ -763,7 +1050,14 @@ This document lists **ALL** the functions and operations available in the MicroJ
 
 ## 🎯 Total API Capabilities
 
-**58 Total Endpoints** providing complete gate access control functionality:
+**📊 72 Total Endpoints** providing complete gate access control functionality:
+
+### **🔥 New Frontend-Optimized Features:**
+✅ **Unified Entry Registration** - Single call for visitor + vehicle + access log  
+✅ **File Upload System** - Complete image management (5MB max, multiple formats)  
+✅ **Bitácora System** - Comprehensive event logging with 10 quick event types  
+✅ **Static File Serving** - Direct image access via URLs  
+✅ **Atomic Operations** - Database consistency with rollback support
 
 ✅ **Complete CRUD Operations** for all entities
 ✅ **Role-Based Access Control** with 3 permission levels
