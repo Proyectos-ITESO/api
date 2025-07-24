@@ -36,6 +36,9 @@ namespace MicroJack.API.Models.Core
         [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
 
+        [JsonPropertyName("updatedAt")]
+        public DateTime? UpdatedAt { get; set; }
+
         // Navigation properties
         [JsonIgnore]
         public virtual ICollection<GuardRole> GuardRoles { get; set; } = new List<GuardRole>();

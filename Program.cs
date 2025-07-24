@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using MicroJack.API.Data;
 using MicroJack.API.Services;
 using MicroJack.API.Services.Interfaces;
 using MicroJack.API.Routes;
 using MicroJack.API.Models.Catalog;
+using MicroJack.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +34,32 @@ if (!connectionString.Contains("Password="))
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 
+// Configure JWT Authentication
+var jwtSecret = builder.Configuration["JWT:Secret"] ?? "MicroJack-DefaultSecret-ChangeInProduction-2024";
+var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false; // Set to true in production
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+// Add Authorization services
+builder.Services.AddAuthorization();
+
 // Registrar servicios con Entity Framework Core
 
 // Legacy services (mantener por compatibilidad)
@@ -53,6 +83,9 @@ builder.Services.AddScoped<ICatalogService<VisitReason>, VisitReasonService>();
 // Transaction services
 builder.Services.AddScoped<IAccessLogService, AccessLogService>();
 builder.Services.AddScoped<IEventLogService, EventLogService>();
+
+// Authentication and authorization services
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 // Other services
 builder.Services.AddScoped<IPhidgetService, PhidgetService>();
@@ -118,6 +151,11 @@ app.UseHttpsRedirection();
 
 // Habilitar CORS
 app.UseCors();
+
+// Enable Authentication and Authorization
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseCustomAuthorization();
 
 // --- 3. Configuración de Rutas ---
 app.Logger.LogInformation("Configurando endpoints...");

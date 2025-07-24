@@ -7,7 +7,15 @@ namespace MicroJack.API.Routes
     {
         public static void Configure(WebApplication app)
         {
-            // Configurar las rutas de cada módulo
+            // Configure authentication routes (no auth required)
+            app.MapAuthRoutes();
+            
+            // Configure new normalized database routes
+            app.MapGuardRoutes();
+            app.MapAddressRoutes();
+            app.MapVehicleRoutes();
+            
+            // Configurar las rutas de cada módulo legacy
             RegistrationRoutes.Configure(app);
             PreRegistrationRoutes.Configure(app);
             IntermediateRegistrationRoutes.Configure(app);
@@ -16,8 +24,8 @@ namespace MicroJack.API.Routes
             
             // Aquí se pueden agregar más módulos en el futuro
             // Por ejemplo:
-            // UserRoutes.Configure(app);
-            // ReportRoutes.Configure(app);
+            // VisitorRoutes.Configure(app);
+            // AccessLogRoutes.Configure(app);
             // etc.
         }
     }
