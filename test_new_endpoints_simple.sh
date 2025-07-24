@@ -99,7 +99,7 @@ unified_entry_data='{
         "faceImageUrl": "/uploads/test_face.jpg"
     },
     "vehicle": {
-        "licensePlate": "TEST123",
+        "licensePlate": "NEW123",
         "plateImageUrl": "/uploads/test_plate.jpg",
         "brandId": 1,
         "colorId": 1,

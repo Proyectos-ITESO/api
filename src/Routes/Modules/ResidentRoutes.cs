@@ -9,12 +9,12 @@ namespace MicroJack.API.Routes.Modules
         {
             var residentGroup = app.MapGroup("/api/residents").WithTags("Residents");
 
-            // GET all residents
-            residentGroup.MapGet("/", async (IResidentService residentService) =>
+            // GET all residents with optional search
+            residentGroup.MapGet("/", async (IResidentService residentService, string? search) =>
             {
                 try
                 {
-                    var residents = await residentService.GetAllResidentsAsync();
+                    var residents = await residentService.SearchResidentsAsync(search);
                     return Results.Ok(new { success = true, data = residents });
                 }
                 catch (Exception ex)

@@ -92,7 +92,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error creating vehicle", detail: ex.Message, statusCode: 500);
                 }
             })
-            .RequireAuthorization("AdminLevel")
+            .RequireAuthorization("GuardLevel")
             .WithName("CreateVehicle")
             .Produces<object>(201)
             .Produces(500);

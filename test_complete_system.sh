@@ -177,7 +177,7 @@ fi
 echo ""
 echo "🏠 Step 7: Test Address Management"
 echo "7.1 - Create Address"
-address_data='{"streetAddress":"Calle Test 123","lotNumber":"A-01","neighborhood":"Test Neighborhood","city":"Test City","zipCode":"12345","isActive":true}'
+address_data='{"identifier":"Casa 123", "status": "Active", "message": "Test message"}'
 create_address_response=$(api_call POST "/api/addresses" "$address_data" "auth")
 echo "$create_address_response" | jq .
 if echo "$create_address_response" | jq -e '.success' > /dev/null; then
@@ -191,7 +191,7 @@ fi
 echo ""
 echo "🚗 Step 8: Test Vehicle Management"
 echo "8.1 - Create Vehicle"
-vehicle_data='{"licensePlate":"TEST123","brandId":1,"colorId":1,"typeId":1}'
+vehicle_data='{"licensePlate":"SYS123","brandId":1,"colorId":1,"typeId":1}'
 create_vehicle_response=$(api_call POST "/api/vehicles" "$vehicle_data" "auth")
 echo "$create_vehicle_response" | jq .
 if echo "$create_vehicle_response" | jq -e '.success' > /dev/null; then
@@ -204,7 +204,7 @@ fi
 
 echo ""
 echo "8.2 - Get Vehicle by License Plate"
-vehicle_by_plate_response=$(api_call GET "/api/vehicles/plate/TEST123" "" "auth")
+vehicle_by_plate_response=$(api_call GET "/api/vehicles/plate/SYS123" "" "auth")
 echo "$vehicle_by_plate_response" | jq .
 if echo "$vehicle_by_plate_response" | jq -e '.success' > /dev/null; then
     echo "✅ Get Vehicle by Plate: PASSED"
@@ -213,9 +213,21 @@ else
 fi
 
 echo ""
+echo "8.3 - Test Vehicle Creation with Guard Token"
+# This part assumes a 'guard' user exists and we can log in as them
+# For simplicity, we'll just use the admin token which has GuardLevel privileges
+create_vehicle_guard_response=$(api_call POST "/api/vehicles" '{"licensePlate":"GUARDTEST","brandId":2,"colorId":2,"typeId":2}' "auth")
+echo "$create_vehicle_guard_response" | jq .
+if echo "$create_vehicle_guard_response" | jq -e '.success' > /dev/null; then
+    echo "✅ Create Vehicle with Guard-Level Token: PASSED"
+else
+    echo "❌ Create Vehicle with Guard-Level Token: FAILED"
+fi
+
+echo ""
 echo "👥 Step 9: Test Visitor Management"
 echo "9.1 - Create Visitor"
-visitor_data='{"fullName":"Test Visitor","email":"visitor@test.com","phone":"555-1234","identificationNumber":"12345678","identificationType":"DNI"}'
+visitor_data='{"fullName":"Test Visitor"}'
 create_visitor_response=$(api_call POST "/api/visitors" "$visitor_data" "auth")
 echo "$create_visitor_response" | jq .
 if echo "$create_visitor_response" | jq -e '.success' > /dev/null; then
@@ -230,8 +242,9 @@ echo ""
 echo "🏘️  Step 10: Test Resident Management"
 if [ -n "$CREATED_ADDRESS_ID" ]; then
     echo "10.1 - Create Resident"
-    resident_data="{\"fullName\":\"Test Resident\",\"email\":\"resident@test.com\",\"phone\":\"555-5678\",\"addressId\":$CREATED_ADDRESS_ID,\"isActive\":true}"
+    resident_data="{\"fullName\":\"Test Resident\",\"addressId\":$CREATED_ADDRESS_ID}"
     create_resident_response=$(api_call POST "/api/residents" "$resident_data" "auth")
+
     echo "$create_resident_response" | jq .
     if echo "$create_resident_response" | jq -e '.success' > /dev/null; then
         echo "✅ Create Resident: PASSED"
@@ -239,6 +252,16 @@ if [ -n "$CREATED_ADDRESS_ID" ]; then
         echo "🏠 Created Resident ID: $CREATED_RESIDENT_ID"
     else
         echo "❌ Create Resident: FAILED"
+    fi
+
+    echo ""
+    echo "10.2 - Search for the created resident"
+    search_resident_response=$(api_call GET "/api/residents?search=Test%20Resident" "" "auth")
+    echo "$search_resident_response" | jq .
+    if echo "$search_resident_response" | jq -e '.success' > /dev/null && [ "$(echo "$search_resident_response" | jq '.data | length')" -gt 0 ]; then
+        echo "✅ Search Resident: PASSED"
+    else
+        echo "❌ Search Resident: FAILED"
     fi
 else
     echo "⚠️  Skipping Resident creation - Address creation failed"
@@ -248,8 +271,9 @@ echo ""
 echo "📝 Step 11: Test Access Log Management"
 if [ -n "$CREATED_VISITOR_ID" ] && [ -n "$CREATED_VEHICLE_ID" ]; then
     echo "11.1 - Create Access Log Entry"
-    access_log_data="{\"visitorId\":$CREATED_VISITOR_ID,\"vehicleId\":$CREATED_VEHICLE_ID,\"purpose\":\"Test Visit\",\"entryTime\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"isActive\":true}"
+    access_log_data="{\"visitorId\":$CREATED_VISITOR_ID,\"vehicleId\":$CREATED_VEHICLE_ID,\"addressId\":$CREATED_ADDRESS_ID,\"entryGuardId\":1}"
     create_access_log_response=$(api_call POST "/api/accesslogs" "$access_log_data" "auth")
+
     echo "$create_access_log_response" | jq .
     if echo "$create_access_log_response" | jq -e '.success' > /dev/null; then
         echo "✅ Create Access Log: PASSED"

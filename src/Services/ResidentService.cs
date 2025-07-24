@@ -69,5 +69,21 @@ namespace MicroJack.API.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<List<Resident>> SearchResidentsAsync(string searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return await GetAllResidentsAsync();
+            }
+
+            var searchTermLower = searchTerm.ToLower();
+
+            return await _context.Residents
+                .Include(r => r.Address)
+                .Where(r => r.FullName.ToLower().Contains(searchTermLower) ||
+                            r.Address.Identifier.ToLower().Contains(searchTermLower))
+                .ToListAsync();
+        }
     }
 }
