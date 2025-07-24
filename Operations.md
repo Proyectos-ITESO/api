@@ -572,6 +572,8 @@ This document lists **ALL** the functions and operations available in the MicroJ
 
 ## 🔧 Legacy Endpoints (Backward Compatibility)
 
+**Note:** These endpoints are maintained for backward compatibility with older systems. For new integrations and optimal performance, it is highly recommended to use the modern, unified endpoints described in other sections.
+
 ### Registration Endpoints
 
 #### `GET /api/registrations`
