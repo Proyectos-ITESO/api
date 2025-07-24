@@ -45,6 +45,13 @@ namespace MicroJack.API.Middleware
         {
             try
             {
+                // Check if user is authenticated first
+                if (!context.User.Identity?.IsAuthenticated ?? true)
+                {
+                    await HandleUnauthorized(context, "User is not authenticated");
+                    return;
+                }
+
                 // Get guard ID from claims
                 var guardIdClaim = context.User.FindFirst("GuardId");
                 if (guardIdClaim == null || !int.TryParse(guardIdClaim.Value, out int guardId))
@@ -80,6 +87,13 @@ namespace MicroJack.API.Middleware
         {
             try
             {
+                // Check if user is authenticated first
+                if (!context.User.Identity?.IsAuthenticated ?? true)
+                {
+                    await HandleUnauthorized(context, "User is not authenticated");
+                    return;
+                }
+
                 // Get guard ID from claims
                 var guardIdClaim = context.User.FindFirst("GuardId");
                 if (guardIdClaim == null || !int.TryParse(guardIdClaim.Value, out int guardId))
