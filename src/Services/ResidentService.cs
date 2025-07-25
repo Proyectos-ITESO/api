@@ -52,7 +52,7 @@ namespace MicroJack.API.Services
                 return null;
 
             existingResident.FullName = resident.FullName;
-            existingResident.PhoneExtension = resident.PhoneExtension;
+            existingResident.Phone = resident.Phone;
             existingResident.AddressId = resident.AddressId;
 
             await _context.SaveChangesAsync();

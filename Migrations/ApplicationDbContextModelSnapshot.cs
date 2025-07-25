@@ -96,6 +96,12 @@ namespace MicroJack.API.Migrations
                         .HasColumnType("INTEGER")
                         .HasAnnotation("Relational:JsonPropertyName", "id");
 
+                    b.Property<string>("Extension")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "extension");
+
                     b.Property<string>("Identifier")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -106,6 +112,10 @@ namespace MicroJack.API.Migrations
                         .HasColumnType("TEXT")
                         .HasAnnotation("Relational:JsonPropertyName", "message");
 
+                    b.Property<int?>("RepresentativeResidentId")
+                        .HasColumnType("INTEGER")
+                        .HasAnnotation("Relational:JsonPropertyName", "representativeResidentId");
+
                     b.Property<string>("Status")
                         .HasMaxLength(50)
                         .HasColumnType("TEXT")
@@ -113,7 +123,39 @@ namespace MicroJack.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Extension")
+                        .IsUnique();
+
+                    b.HasIndex("RepresentativeResidentId");
+
                     b.ToTable("Addresses");
+                });
+
+            modelBuilder.Entity("MicroJack.API.Models.Core.BitacoraNote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasAnnotation("Relational:JsonPropertyName", "id");
+
+                    b.Property<int>("GuardId")
+                        .HasColumnType("INTEGER")
+                        .HasAnnotation("Relational:JsonPropertyName", "guardId");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "note");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "timestamp");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuardId");
+
+                    b.ToTable("BitacoraNotes");
                 });
 
             modelBuilder.Entity("MicroJack.API.Models.Core.Booth", b =>
@@ -221,6 +263,89 @@ namespace MicroJack.API.Migrations
                     b.ToTable("GuardRoles");
                 });
 
+            modelBuilder.Entity("MicroJack.API.Models.Core.PreRegistration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasAnnotation("Relational:JsonPropertyName", "id");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "comments");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "createdAt");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "createdBy");
+
+                    b.Property<DateTime>("ExpectedArrivalTime")
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "expectedArrivalTime");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "expiresAt");
+
+                    b.Property<string>("HouseVisited")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "houseVisited");
+
+                    b.Property<string>("PersonVisited")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "personVisited");
+
+                    b.Property<string>("Plates")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "plates");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "status");
+
+                    b.Property<string>("VehicleBrand")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "vehicleBrand");
+
+                    b.Property<string>("VehicleColor")
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "vehicleColor");
+
+                    b.Property<string>("VisitorName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .HasAnnotation("Relational:JsonPropertyName", "visitorName");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpectedArrivalTime");
+
+                    b.HasIndex("Plates");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Plates", "Status")
+                        .IsUnique();
+
+                    b.ToTable("PreRegistrations");
+                });
+
             modelBuilder.Entity("MicroJack.API.Models.Core.Resident", b =>
                 {
                     b.Property<int>("Id")
@@ -238,10 +363,11 @@ namespace MicroJack.API.Migrations
                         .HasColumnType("TEXT")
                         .HasAnnotation("Relational:JsonPropertyName", "fullName");
 
-                    b.Property<string>("PhoneExtension")
-                        .HasMaxLength(20)
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(15)
                         .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "phoneExtension");
+                        .HasAnnotation("Relational:JsonPropertyName", "phone");
 
                     b.HasKey("Id");
 
@@ -351,254 +477,6 @@ namespace MicroJack.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Visitors");
-                });
-
-            modelBuilder.Entity("MicroJack.API.Models.IntermediateRegistration", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasAnnotation("Relational:JsonPropertyName", "id");
-
-                    b.Property<string>("ApprovalToken")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "approvalToken");
-
-                    b.Property<DateTime?>("ApprovedAt")
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "approvedAt");
-
-                    b.Property<DateTime?>("ArrivalDateTime")
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "arrivalDateTime");
-
-                    b.Property<string>("Brand")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "brand");
-
-                    b.Property<string>("Color")
-                        .HasMaxLength(30)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "color");
-
-                    b.Property<string>("CotoId")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "cotoId");
-
-                    b.Property<string>("CotoName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "cotoName");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "createdAt");
-
-                    b.Property<string>("HouseNumber")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "houseNumber");
-
-                    b.Property<string>("HousePhone")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "housePhone");
-
-                    b.Property<string>("PersonVisited")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "personVisited");
-
-                    b.Property<string>("Plates")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "plates");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "status");
-
-                    b.Property<string>("VisitorName")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "visitorName");
-
-                    b.Property<bool>("WhatsappSent")
-                        .HasColumnType("INTEGER")
-                        .HasAnnotation("Relational:JsonPropertyName", "whatsappSent");
-
-                    b.Property<DateTime?>("WhatsappSentAt")
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "whatsappSentAt");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("IntermediateRegistrations");
-                });
-
-            modelBuilder.Entity("MicroJack.API.Models.PreRegistration", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasAnnotation("Relational:JsonPropertyName", "id");
-
-                    b.Property<DateTime?>("ArrivalDateTime")
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "arrivalDateTime");
-
-                    b.Property<string>("Brand")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "brand");
-
-                    b.Property<string>("Color")
-                        .HasMaxLength(30)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "color");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "createdAt");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "createdBy");
-
-                    b.Property<string>("HouseVisited")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "houseVisited");
-
-                    b.Property<string>("PersonVisited")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "personVisited");
-
-                    b.Property<string>("Plates")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "plates");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "status");
-
-                    b.Property<string>("VisitorName")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "visitorName");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PreRegistrations");
-                });
-
-            modelBuilder.Entity("MicroJack.API.Models.Registration", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasAnnotation("Relational:JsonPropertyName", "id");
-
-                    b.Property<string>("Brand")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "brand");
-
-                    b.Property<string>("Color")
-                        .HasMaxLength(30)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "color");
-
-                    b.Property<string>("Comments")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "comments");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "createdAt");
-
-                    b.Property<DateTime>("EntryTimestamp")
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "entryTimestamp");
-
-                    b.Property<string>("Folio")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "folio");
-
-                    b.Property<string>("Guard")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "guard");
-
-                    b.Property<string>("House")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "house");
-
-                    b.Property<string>("Plates")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "plates");
-
-                    b.Property<string>("RegistrationType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "registrationType");
-
-                    b.Property<string>("Status")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "status");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "updatedAt");
-
-                    b.Property<string>("VisitReason")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "visitReason");
-
-                    b.Property<string>("VisitedPerson")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "visitedPerson");
-
-                    b.Property<string>("VisitorName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT")
-                        .HasAnnotation("Relational:JsonPropertyName", "visitorName");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Folio")
-                        .IsUnique();
-
-                    b.ToTable("Registrations");
                 });
 
             modelBuilder.Entity("MicroJack.API.Models.Transaction.AccessLog", b =>
@@ -711,6 +589,27 @@ namespace MicroJack.API.Migrations
                     b.HasIndex("GuardId");
 
                     b.ToTable("EventLogs");
+                });
+
+            modelBuilder.Entity("MicroJack.API.Models.Core.Address", b =>
+                {
+                    b.HasOne("MicroJack.API.Models.Core.Resident", "RepresentativeResident")
+                        .WithMany()
+                        .HasForeignKey("RepresentativeResidentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("RepresentativeResident");
+                });
+
+            modelBuilder.Entity("MicroJack.API.Models.Core.BitacoraNote", b =>
+                {
+                    b.HasOne("MicroJack.API.Models.Core.Guard", "Guard")
+                        .WithMany()
+                        .HasForeignKey("GuardId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Guard");
                 });
 
             modelBuilder.Entity("MicroJack.API.Models.Core.GuardRole", b =>

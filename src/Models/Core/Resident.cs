@@ -17,9 +17,10 @@ namespace MicroJack.API.Models.Core
         [JsonPropertyName("fullName")]
         public string FullName { get; set; } = string.Empty;
 
-        [MaxLength(20)]
-        [JsonPropertyName("phoneExtension")]
-        public string? PhoneExtension { get; set; }
+        [Required]
+        [MaxLength(15)]
+        [JsonPropertyName("phone")]
+        public string Phone { get; set; } = string.Empty; // Teléfono real del residente
 
         [Required]
         [JsonPropertyName("addressId")]

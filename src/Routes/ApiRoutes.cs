@@ -23,19 +23,12 @@ namespace MicroJack.API.Routes
             app.MapUnifiedAccessRoutes();
             app.MapFileUploadRoutes();
             app.MapEventLogRoutes();
+            app.MapSimplePreRegistrationRoutes();
+            app.MapResidentManagementRoutes();
+            app.MapBitacoraRoutes();
+            app.MapHousesRoutes();
             
-            // Configurar las rutas de cada módulo legacy
-            RegistrationRoutes.Configure(app);
-            PreRegistrationRoutes.Configure(app);
-            IntermediateRegistrationRoutes.Configure(app);
-            PhidgetTestRoutes.Configure(app); // Nuevo módulo de prueba
-
-            
-            // Aquí se pueden agregar más módulos en el futuro
-            // Por ejemplo:
-            // VisitorRoutes.Configure(app);
-            // AccessLogRoutes.Configure(app);
-            // etc.
+            // PhidgetTestRoutes.Configure(app); // Hardware testing module
         }
     }
 }

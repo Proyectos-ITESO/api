@@ -6,26 +6,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace MicroJack.API.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCotoSystem : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "Addresses",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Identifier = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Status = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    Message = table.Column<string>(type: "TEXT", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Addresses", x => x.Id);
-                });
-
             migrationBuilder.CreateTable(
                 name: "Booths",
                 columns: table => new
@@ -60,80 +45,27 @@ namespace MicroJack.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "IntermediateRegistrations",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Plates = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    VisitorName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
-                    Brand = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    Color = table.Column<string>(type: "TEXT", maxLength: 30, nullable: true),
-                    CotoId = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
-                    CotoName = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    HouseNumber = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    HousePhone = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    ArrivalDateTime = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    PersonVisited = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
-                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    WhatsappSent = table.Column<bool>(type: "INTEGER", nullable: false),
-                    WhatsappSentAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    ApprovalToken = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
-                    ApprovedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_IntermediateRegistrations", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "PreRegistrations",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Plates = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    VisitorName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
-                    Brand = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    Color = table.Column<string>(type: "TEXT", maxLength: 30, nullable: true),
-                    HouseVisited = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    ArrivalDateTime = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    PersonVisited = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    Plates = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    VisitorName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    VehicleBrand = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    VehicleColor = table.Column<string>(type: "TEXT", maxLength: 30, nullable: true),
+                    HouseVisited = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    ExpectedArrivalTime = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    PersonVisited = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    CreatedBy = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Comments = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    CreatedBy = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PreRegistrations", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Registrations",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    RegistrationType = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    House = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    VisitReason = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
-                    VisitorName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    VisitedPerson = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Guard = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    Comments = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
-                    Folio = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    EntryTimestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Plates = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    Brand = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
-                    Color = table.Column<string>(type: "TEXT", maxLength: 30, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Registrations", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -219,22 +151,22 @@ namespace MicroJack.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Residents",
+                name: "BitacoraNotes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    FullName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    PhoneExtension = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
-                    AddressId = table.Column<int>(type: "INTEGER", nullable: false)
+                    Note = table.Column<string>(type: "TEXT", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    GuardId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Residents", x => x.Id);
+                    table.PrimaryKey("PK_BitacoraNotes", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Residents_Addresses_AddressId",
-                        column: x => x.AddressId,
-                        principalTable: "Addresses",
+                        name: "FK_BitacoraNotes_Guards_GuardId",
+                        column: x => x.GuardId,
+                        principalTable: "Guards",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -348,12 +280,6 @@ namespace MicroJack.API.Migrations
                 {
                     table.PrimaryKey("PK_AccessLogs", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AccessLogs_Addresses_AddressId",
-                        column: x => x.AddressId,
-                        principalTable: "Addresses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
                         name: "FK_AccessLogs_Guards_EntryGuardId",
                         column: x => x.EntryGuardId,
                         principalTable: "Guards",
@@ -363,12 +289,6 @@ namespace MicroJack.API.Migrations
                         name: "FK_AccessLogs_Guards_ExitGuardId",
                         column: x => x.ExitGuardId,
                         principalTable: "Guards",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_AccessLogs_Residents_ResidentVisitedId",
-                        column: x => x.ResidentVisitedId,
-                        principalTable: "Residents",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
@@ -387,6 +307,44 @@ namespace MicroJack.API.Migrations
                         name: "FK_AccessLogs_Visitors_VisitorId",
                         column: x => x.VisitorId,
                         principalTable: "Visitors",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Addresses",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Identifier = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Extension = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    RepresentativeResidentId = table.Column<int>(type: "INTEGER", nullable: true),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    Message = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Addresses", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Residents",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    FullName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Phone = table.Column<string>(type: "TEXT", maxLength: 15, nullable: false),
+                    AddressId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Residents", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Residents_Addresses_AddressId",
+                        column: x => x.AddressId,
+                        principalTable: "Addresses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -427,6 +385,22 @@ namespace MicroJack.API.Migrations
                 column: "VisitReasonId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Addresses_Extension",
+                table: "Addresses",
+                column: "Extension",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Addresses_RepresentativeResidentId",
+                table: "Addresses",
+                column: "RepresentativeResidentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BitacoraNotes_GuardId",
+                table: "BitacoraNotes",
+                column: "GuardId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_EventLogs_GuardId",
                 table: "EventLogs",
                 column: "GuardId");
@@ -449,10 +423,25 @@ namespace MicroJack.API.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Registrations_Folio",
-                table: "Registrations",
-                column: "Folio",
+                name: "IX_PreRegistrations_ExpectedArrivalTime",
+                table: "PreRegistrations",
+                column: "ExpectedArrivalTime");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PreRegistrations_Plates",
+                table: "PreRegistrations",
+                column: "Plates");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PreRegistrations_Plates_Status",
+                table: "PreRegistrations",
+                columns: new[] { "Plates", "Status" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PreRegistrations_Status",
+                table: "PreRegistrations",
+                column: "Status");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Residents_AddressId",
@@ -485,13 +474,44 @@ namespace MicroJack.API.Migrations
                 name: "IX_Vehicles_TypeId",
                 table: "Vehicles",
                 column: "TypeId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_AccessLogs_Addresses_AddressId",
+                table: "AccessLogs",
+                column: "AddressId",
+                principalTable: "Addresses",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_AccessLogs_Residents_ResidentVisitedId",
+                table: "AccessLogs",
+                column: "ResidentVisitedId",
+                principalTable: "Residents",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.SetNull);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Addresses_Residents_RepresentativeResidentId",
+                table: "Addresses",
+                column: "RepresentativeResidentId",
+                principalTable: "Residents",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.SetNull);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Residents_Addresses_AddressId",
+                table: "Residents");
+
             migrationBuilder.DropTable(
                 name: "AccessLogs");
+
+            migrationBuilder.DropTable(
+                name: "BitacoraNotes");
 
             migrationBuilder.DropTable(
                 name: "Booths");
@@ -503,16 +523,7 @@ namespace MicroJack.API.Migrations
                 name: "GuardRoles");
 
             migrationBuilder.DropTable(
-                name: "IntermediateRegistrations");
-
-            migrationBuilder.DropTable(
                 name: "PreRegistrations");
-
-            migrationBuilder.DropTable(
-                name: "Registrations");
-
-            migrationBuilder.DropTable(
-                name: "Residents");
 
             migrationBuilder.DropTable(
                 name: "Vehicles");
@@ -530,9 +541,6 @@ namespace MicroJack.API.Migrations
                 name: "Roles");
 
             migrationBuilder.DropTable(
-                name: "Addresses");
-
-            migrationBuilder.DropTable(
                 name: "VehicleBrands");
 
             migrationBuilder.DropTable(
@@ -540,6 +548,12 @@ namespace MicroJack.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "VehicleTypes");
+
+            migrationBuilder.DropTable(
+                name: "Addresses");
+
+            migrationBuilder.DropTable(
+                name: "Residents");
         }
     }
 }

@@ -12,10 +12,13 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    // Legacy tables (mantener por compatibilidad)
-    public DbSet<Registration> Registrations { get; set; }
+    // Legacy tables removed - using new normalized entities
+    
+    // Pre-registration system
     public DbSet<PreRegistration> PreRegistrations { get; set; }
-    public DbSet<IntermediateRegistration> IntermediateRegistrations { get; set; }
+    
+    // Bitácora system
+    public DbSet<BitacoraNote> BitacoraNotes { get; set; }
 
     // Core entities
     public DbSet<Guard> Guards { get; set; }
@@ -41,66 +44,23 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Legacy entities configuration (mantener por compatibilidad)
-        ConfigureLegacyEntities(modelBuilder);
+        // Legacy entities configuration removed
 
+        // Pre-registration configuration
+        ConfigurePreRegistration(modelBuilder);
+        
         // New normalized schema configuration
         ConfigureNewSchema(modelBuilder);
     }
 
-    private void ConfigureLegacyEntities(ModelBuilder modelBuilder)
+    private void ConfigurePreRegistration(ModelBuilder modelBuilder)
     {
-        // Configure Registration entity
-        modelBuilder.Entity<Registration>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).ValueGeneratedOnAdd();
-            entity.Property(e => e.RegistrationType).HasMaxLength(50);
-            entity.Property(e => e.House).HasMaxLength(20);
-            entity.Property(e => e.VisitReason).HasMaxLength(200);
-            entity.Property(e => e.VisitorName).HasMaxLength(100);
-            entity.Property(e => e.VisitedPerson).HasMaxLength(100);
-            entity.Property(e => e.Guard).HasMaxLength(50);
-            entity.Property(e => e.Comments).HasMaxLength(500);
-            entity.Property(e => e.Folio).HasMaxLength(50);
-            entity.Property(e => e.Plates).HasMaxLength(20);
-            entity.Property(e => e.Brand).HasMaxLength(50);
-            entity.Property(e => e.Color).HasMaxLength(30);
-            entity.Property(e => e.Status).HasMaxLength(20);
-            entity.HasIndex(e => e.Folio).IsUnique();
-        });
-
-        // Configure PreRegistration entity
         modelBuilder.Entity<PreRegistration>(entity =>
         {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).ValueGeneratedOnAdd();
-            entity.Property(e => e.Plates).HasMaxLength(20);
-            entity.Property(e => e.VisitorName).HasMaxLength(100);
-            entity.Property(e => e.Brand).HasMaxLength(50);
-            entity.Property(e => e.Color).HasMaxLength(30);
-            entity.Property(e => e.HouseVisited).HasMaxLength(20);
-            entity.Property(e => e.PersonVisited).HasMaxLength(100);
-            entity.Property(e => e.Status).HasMaxLength(20);
-            entity.Property(e => e.CreatedBy).HasMaxLength(50);
-        });
-
-        // Configure IntermediateRegistration entity
-        modelBuilder.Entity<IntermediateRegistration>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).ValueGeneratedOnAdd();
-            entity.Property(e => e.Plates).HasMaxLength(20);
-            entity.Property(e => e.VisitorName).HasMaxLength(100);
-            entity.Property(e => e.Brand).HasMaxLength(50);
-            entity.Property(e => e.Color).HasMaxLength(30);
-            entity.Property(e => e.CotoId).HasMaxLength(10);
-            entity.Property(e => e.CotoName).HasMaxLength(50);
-            entity.Property(e => e.HouseNumber).HasMaxLength(20);
-            entity.Property(e => e.HousePhone).HasMaxLength(20);
-            entity.Property(e => e.PersonVisited).HasMaxLength(100);
-            entity.Property(e => e.Status).HasMaxLength(20);
-            entity.Property(e => e.ApprovalToken).HasMaxLength(100);
+            entity.HasIndex(e => e.Plates);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.ExpectedArrivalTime);
+            entity.HasIndex(e => new { e.Plates, e.Status }).IsUnique();
         });
     }
 
@@ -116,6 +76,16 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Guard>(entity =>
         {
             entity.HasIndex(e => e.Username).IsUnique();
+        });
+
+        // Configure Address unique extension and representative relationship
+        modelBuilder.Entity<Address>(entity =>
+        {
+            entity.HasIndex(e => e.Extension).IsUnique();
+            entity.HasOne(a => a.RepresentativeResident)
+                  .WithMany()
+                  .HasForeignKey(a => a.RepresentativeResidentId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Configure Role unique constraint
@@ -218,6 +188,13 @@ public class ApplicationDbContext : DbContext
             .HasOne(el => el.Guard)
             .WithMany(g => g.EventLogs)
             .HasForeignKey(el => el.GuardId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // BitacoraNote -> Guard
+        modelBuilder.Entity<BitacoraNote>()
+            .HasOne(b => b.Guard)
+            .WithMany()
+            .HasForeignKey(b => b.GuardId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -15,7 +15,15 @@ namespace MicroJack.API.Models.Core
         [Required]
         [MaxLength(100)]
         [JsonPropertyName("identifier")]
-        public string Identifier { get; set; } = string.Empty;
+        public string Identifier { get; set; } = string.Empty; // Casa número/dirección
+
+        [Required]
+        [MaxLength(10)]
+        [JsonPropertyName("extension")]
+        public string Extension { get; set; } = string.Empty; // Extensión única de la casa
+
+        [JsonPropertyName("representativeResidentId")]
+        public int? RepresentativeResidentId { get; set; } // ID del residente representante
 
         [MaxLength(50)]
         [JsonPropertyName("status")]
@@ -27,6 +35,9 @@ namespace MicroJack.API.Models.Core
         // Navigation properties
         [JsonIgnore]
         public virtual ICollection<Resident> Residents { get; set; } = new List<Resident>();
+        
+        [JsonIgnore]
+        public virtual Resident? RepresentativeResident { get; set; }
         
         [JsonIgnore]
         public virtual ICollection<AccessLog> AccessLogs { get; set; } = new List<AccessLog>();

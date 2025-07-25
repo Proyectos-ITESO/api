@@ -72,7 +72,7 @@ namespace MicroJack.API.Routes.Modules
                     var resident = new Resident
                     {
                         FullName = request.FullName,
-                        PhoneExtension = request.PhoneExtension,
+                        Phone = request.Phone,
                         AddressId = request.AddressId
                     };
 
@@ -97,7 +97,7 @@ namespace MicroJack.API.Routes.Modules
                     var resident = new Resident
                     {
                         FullName = request.FullName,
-                        PhoneExtension = request.PhoneExtension,
+                        Phone = request.Phone,
                         AddressId = request.AddressId
                     };
 
@@ -144,14 +144,14 @@ namespace MicroJack.API.Routes.Modules
     public class ResidentCreateRequest
     {
         public string FullName { get; set; } = string.Empty;
-        public string? PhoneExtension { get; set; }
+        public string Phone { get; set; } = string.Empty;
         public int AddressId { get; set; }
     }
 
     public class ResidentUpdateRequest
     {
         public string FullName { get; set; } = string.Empty;
-        public string? PhoneExtension { get; set; }
+        public string Phone { get; set; } = string.Empty;
         public int AddressId { get; set; }
     }
 }

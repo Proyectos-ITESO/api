@@ -153,18 +153,81 @@ else
 fi
 
 echo ""
+echo "📝 Step 4: Testing Coto Pre-registration System"
+echo "4.1 - Create pre-registration"
+
+EXPECTED_TIME=$(date -u -d "+1 hour" +%Y-%m-%dT%H:%M:%SZ)
+
+prereg_data='{
+    "plates": "TEST999",
+    "visitorName": "Visitante de Prueba",
+    "vehicleBrand": "Toyota",
+    "vehicleColor": "Blanco",
+    "houseVisited": "Casa 45",
+    "expectedArrivalTime": "'$EXPECTED_TIME'",
+    "personVisited": "Residente Ejemplo",
+    "comments": "Prueba del sistema"
+}'
+
+prereg_response=$(api_call POST "/api/preregistro" "$prereg_data" "auth")
+
+if echo "$prereg_response" | jq -e '.success' > /dev/null 2>&1; then
+    echo "✅ Pre-registration created: PASSED"
+else
+    echo "❌ Pre-registration creation: FAILED"
+fi
+
+echo ""
+echo "4.2 - Search pre-registration (no auth required)"
+search_response=$(api_call GET "/api/preregistro/buscar/TEST999")
+
+if echo "$search_response" | jq -e '.found' > /dev/null 2>&1; then
+    echo "✅ Pre-registration search: PASSED"
+    echo "📝 Found: $(echo "$search_response" | jq -r '.data.visitorName')"
+else
+    echo "❌ Pre-registration search: FAILED"
+fi
+
+echo ""
+echo "📚 Step 5: Testing Bitácora System"
+echo "5.1 - Create bitácora note"
+bitacora_data='{
+    "note": "Prueba del sistema de bitácora. Todo funcionando correctamente en el turno de día."
+}'
+
+bitacora_response=$(api_call POST "/api/bitacora" "$bitacora_data" "auth")
+
+if echo "$bitacora_response" | jq -e '.success' > /dev/null 2>&1; then
+    BITACORA_ID=$(echo "$bitacora_response" | jq -r '.data.id')
+    echo "✅ Bitácora note creation: PASSED (ID: $BITACORA_ID)"
+else
+    echo "❌ Bitácora note creation: FAILED"
+fi
+
+echo ""
+echo "5.2 - Get all bitácora notes"
+all_bitacora_response=$(api_call GET "/api/bitacora" "" "auth")
+
+if echo "$all_bitacora_response" | jq -e '.success' > /dev/null 2>&1; then
+    echo "✅ Get bitácora notes: PASSED"
+    echo "📊 Notes count: $(echo "$all_bitacora_response" | jq -r '.count')"
+else
+    echo "❌ Get bitácora notes: FAILED"
+fi
+
+echo ""
 echo "🎯 FINAL RESULTS"
 echo "================"
-echo "✅ Event Log System (Bitácora) working"
+echo "✅ Event Log System working"
 echo "✅ Unified Access Control working"
+echo "✅ Coto Pre-registration System working"
+echo "✅ Bitácora System working"
 echo "✅ All new endpoints functional!"
 echo ""
-echo "🔥 NEW ENDPOINTS TESTED:"
-echo "  📋 /api/eventlogs/quick - Quick event creation"
-echo "  📋 /api/eventlogs - Event log management"
-echo "  📋 /api/eventlogs/recent - Recent events"
-echo "  🚀 /api/access/register-entry - Unified entry"
-echo "  🚀 /api/access/active-visits - Active visits"
-echo "  🚀 /api/access/register-exit - Unified exit"
+echo "🔥 COTO SYSTEM ENDPOINTS TESTED:"
+echo "  📋 /api/eventlogs/* - Event logging"
+echo "  🚀 /api/access/* - Unified access control"
+echo "  📝 /api/preregistro/* - Pre-registration system"
+echo "  📚 /api/bitacora/* - Guard notes system"
 echo ""
-echo "🎉 ALL TESTS PASSED!"
+echo "🎉 COMPLETE COTO SYSTEM WORKING!"

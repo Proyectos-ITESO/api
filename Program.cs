@@ -79,9 +79,13 @@ builder.Services.AddAuthorization(options =>
 // Registrar servicios con Entity Framework Core
 
 // Legacy services (mantener por compatibilidad)
-builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+// Legacy services removed - using new normalized entities
+
+// Pre-registration service
 builder.Services.AddScoped<IPreRegistrationService, PreRegistrationService>();
-builder.Services.AddScoped<IIntermediateRegistrationService, IntermediateRegistrationService>();
+
+// Bitácora service
+builder.Services.AddScoped<IBitacoraService, BitacoraService>();
 
 // Core entity services
 builder.Services.AddScoped<IGuardService, GuardService>();
