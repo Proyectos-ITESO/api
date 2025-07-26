@@ -1,6 +1,0 @@
-@LicensingServer_HostAddress = http://localhost:5236
-
-GET {{LicensingServer_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

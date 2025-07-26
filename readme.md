@@ -1073,3 +1073,240 @@ This document lists **ALL** the functions and operations available in the MicroJ
 ✅ **Resident & Address Management** with relationships
 
 The API provides everything needed to run a complete, professional gate access control system with enterprise-level security and functionality.
+
+---
+
+## 🔄 Auto-Update System & Release Management
+
+### Overview
+
+MicroJack PRO includes an advanced auto-update system that ensures all client installations stay current with the latest versions. The system provides secure, automatic updates with cryptographic verification and supports both optional and critical update scenarios.
+
+### System Architecture
+
+The auto-update system consists of three key components:
+
+#### 1. **MicroJack.API** (Main Application)
+- Contains `LicenseService` that validates licenses and detects version mismatches
+- Automatically launches the updater when a critical update is required
+- Exits gracefully to allow file replacement during updates
+
+#### 2. **MicroJack.Updater** (Separate Executable)
+- **Location:** `../MicroJack.Updater/` (independent project)
+- **Purpose:** Handles the update process while the main application is closed
+- **Process Flow:**
+  1. Downloads the update package from the specified URL
+  2. Verifies file integrity using SHA256 hash comparison
+  3. Extracts and replaces application files
+  4. Restarts the main application with the new version
+
+#### 3. **License Server** (Update Control Center)
+- **Location:** `../licensing-server/`
+- **Configuration:** `licenses.json` contains version information and download URLs
+- **Security:** All responses are cryptographically signed to prevent tampering
+
+### Auto-Update Process
+
+1. **Version Check:** Application compares its current version against license server's `MinimumRequiredVersion` and `LatestVersion`
+2. **Update Detection:** If current version is below minimum required, automatic update is triggered
+3. **Secure Download:** System downloads update package from URL specified in license data
+4. **Integrity Verification:** Downloaded file's SHA256 hash is verified against expected hash from license server
+5. **File Replacement:** Updater extracts new files and replaces current application files
+6. **Automatic Restart:** Application automatically restarts with the new version
+
+### Update Behavior Types
+
+#### **Non-Critical Updates**
+`CurrentVersion >= MinimumRequiredVersion < LatestVersion`
+- ✅ Application runs normally
+- ℹ️ Logs a warning about available update
+- 🔄 Update is optional
+
+#### **Critical Updates** 
+`CurrentVersion < MinimumRequiredVersion`
+- ❌ Application refuses to start
+- 🔄 Automatically initiates update process
+- 🚀 Restarts with new version after successful update
+
+### Creating and Deploying New Releases
+
+#### Step 1: Build the Release
+```bash
+# Build the new version with Release configuration
+dotnet build --configuration Release
+
+# Create the update package
+cd bin/Release/net8.0/
+zip -r ../../../microjack-v1.2.0.zip *
+cd ../../../
+
+# Calculate the SHA256 hash of the update package
+sha256sum microjack-v1.2.0.zip
+# Output: a1b2c3d4e5f6... microjack-v1.2.0.zip
+```
+
+#### Step 2: Deploy the Update Package
+Upload the ZIP file to your web server or CDN:
+```bash
+# Example: Upload to your production server
+scp microjack-v1.2.0.zip user@yourserver.com:/var/www/downloads/
+
+# Or upload to AWS S3, Azure Blob, etc.
+aws s3 cp microjack-v1.2.0.zip s3://your-bucket/updates/
+```
+
+#### Step 3: Update License Server Configuration
+Edit `../licensing-server/licenses.json` to announce the new version:
+
+```json
+{
+  "LicenseKey": "YOUR_LICENSE_KEY",
+  "Owner": "Client Name",
+  "Type": "Standard",
+  "ExpirationDate": "2025-12-31",
+  "EnabledFeatures": ["Basic", "Advanced"],
+  "LatestVersion": "1.2.0",
+  "MinimumRequiredVersion": "1.0.0",
+  "DownloadUrl": "https://yourserver.com/downloads/microjack-v1.2.0.zip",
+  "FileHash": "a1b2c3d4e5f6789..." // SHA256 hash from Step 1
+}
+```
+
+#### Step 4: Restart License Server
+```bash
+cd ../licensing-server
+dotnet run --urls="http://localhost:5101"
+```
+
+### Version Control Strategies
+
+#### **For Optional Updates (Recommended)**
+```json
+{
+  "LatestVersion": "1.2.0",
+  "MinimumRequiredVersion": "1.0.0"
+}
+```
+**Result:** Clients on v1.0.0-1.1.x see update notification but continue running
+
+#### **For Critical/Security Updates**
+```json
+{
+  "LatestVersion": "1.2.1", 
+  "MinimumRequiredVersion": "1.2.1"
+}
+```
+**Result:** All clients below v1.2.1 are forced to update immediately
+
+#### **For Gradual Rollouts**
+```json
+{
+  "LatestVersion": "1.3.0",
+  "MinimumRequiredVersion": "1.1.0"
+}
+```
+**Result:** v1.1.0+ clients get optional update, older clients are forced to update
+
+### Security Features
+
+- **🔐 RSA Digital Signatures:** All license data is cryptographically signed using 2048-bit RSA keys
+- **🛡️ File Integrity Verification:** SHA256 hash verification prevents corrupted or malicious updates
+- **🔒 Secure Downloads:** Full HTTPS support for production deployments
+- **💾 Offline Resilience:** Cached licenses allow operation when license server is temporarily unavailable
+- **🚫 Tamper Protection:** Any modification to license data invalidates the cryptographic signature
+
+### Testing the Auto-Update System
+
+The project includes a comprehensive integration test:
+
+```bash
+# From the api/ directory
+bash test_autoupdate_system.sh
+```
+
+**This test performs:**
+1. Builds both the main API and the separate MicroJack.Updater project
+2. Creates a simulated "outdated" application installation
+3. Starts a license server and file server to simulate production environment
+4. Triggers the auto-update process and verifies complete functionality
+5. Tests file download, hash verification, file replacement, and application restart
+
+### Production Deployment Checklist
+
+#### License Server Setup
+- [ ] Generate RSA key pair for license signing
+- [ ] Configure `licenses.json` with correct version information
+- [ ] Set up secure hosting (HTTPS recommended)
+- [ ] Configure firewall to allow license validation requests
+
+#### Update File Hosting
+- [ ] Set up reliable file hosting (CDN recommended for global distribution)
+- [ ] Ensure adequate bandwidth for update downloads
+- [ ] Configure HTTPS for secure downloads
+- [ ] Implement proper caching headers
+
+#### Client Configuration
+- [ ] Configure `appsettings.json` with correct license server URL
+- [ ] Install public key for license verification
+- [ ] Set appropriate license key for each client
+- [ ] Test connectivity to license server
+
+#### Monitoring & Maintenance
+- [ ] Monitor license server logs for validation requests
+- [ ] Track update success/failure rates
+- [ ] Set up alerts for failed updates
+- [ ] Regularly backup license server configuration
+
+The auto-update system provides enterprise-grade software distribution with military-level security, ensuring your MicroJack PRO installations stay current and secure automatically.
+
+
+
+
+
+
+Proceso para un nuevo release:
+
+  Paso 1: Preparar los archivos del nuevo release
+
+  # 1. Compilar la nueva versión
+  dotnet build --configuration Release
+
+  # 2. Crear el ZIP con los archivos actualizados
+  zip -r microjack-v1.2.0.zip bin/Release/net8.0/*
+
+  # 3. Calcular el hash del archivo
+  sha256sum microjack-v1.2.0.zip
+
+  Paso 2: Subir el archivo a tu servidor de descargas
+
+  # Subir a tu servidor web/CDN
+  scp microjack-v1.2.0.zip usuario@tu-servidor.com:/var/www/downloads/
+
+  Paso 3: Actualizar licenses.json
+
+  {
+    "LicenseKey": "TU_LICENSE_KEY",
+    "LatestVersion": "1.2.0",           // ← Nueva versión
+    "MinimumRequiredVersion": "1.0.0",  // ← Versión mínima permitida
+    "DownloadUrl": "https://tu-servidor.com/downloads/microjack-v1.2.0.zip",
+    "FileHash": "abc123def456..."       // ← Hash del nuevo ZIP
+  }
+
+  Paso 4: Comportamiento del sistema
+
+  Para versiones no críticas: MinimumRequiredVersion < versión actual
+  - ✅ La aplicación funciona normalmente
+  - ℹ️ Solo muestra un aviso de nueva versión disponible
+
+  Para versiones críticas: LatestVersion > MinimumRequiredVersion > versión actual
+  - ❌ La aplicación se cierra automáticamente
+  - 🔄 Inicia el autoupdate obligatorio
+
+  Ejemplo práctico:
+
+  // Situación: Tienes v1.0.0 instalada
+  {
+    "LatestVersion": "1.2.0",
+    "MinimumRequiredVersion": "1.1.0"  // ← Versión crítica
+  }
+  // Resultado: Autoupdate obligatorio

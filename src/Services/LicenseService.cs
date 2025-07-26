@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace MicroJack.API.Services;
 
@@ -56,7 +57,7 @@ public class LicenseService : ILicenseService
             throw new Exception("Invalid response from license server.");
         }
 
-        var dataToVerify = $"{licenseCache.LicenseKey}{licenseCache.ExpirationDate:o}{string.Join(",", licenseCache.EnabledFeatures)}{licenseCache.NextVerificationDate:o}{licenseCache.LatestVersion}{licenseCache.MinimumRequiredVersion}";
+        var dataToVerify = $"{licenseCache.LicenseKey}{licenseCache.ExpirationDate:o}{string.Join(",", licenseCache.EnabledFeatures)}{licenseCache.NextVerificationDate:o}{licenseCache.LatestVersion}{licenseCache.MinimumRequiredVersion}{licenseCache.DownloadUrl}{licenseCache.FileHash}";
         if (!VerifySignature(dataToVerify, licenseCache.Signature, _licenseSettings.PublicKey))
         {
             throw new Exception("Invalid signature from license server.");
@@ -85,7 +86,7 @@ public class LicenseService : ILicenseService
             throw new Exception("License validation failed. Please connect to the internet to refresh your license.");
         }
 
-        var dataToVerify = $"{cache.LicenseKey}{cache.ExpirationDate:o}{string.Join(",", cache.EnabledFeatures)}{cache.NextVerificationDate:o}{cache.LatestVersion}{cache.MinimumRequiredVersion}";
+        var dataToVerify = $"{cache.LicenseKey}{cache.ExpirationDate:o}{string.Join(",", cache.EnabledFeatures)}{cache.NextVerificationDate:o}{cache.LatestVersion}{cache.MinimumRequiredVersion}{cache.DownloadUrl}{cache.FileHash}";
         if (!VerifySignature(dataToVerify, cache.Signature, _licenseSettings.PublicKey))
         {
             _logger.LogError("Offline validation failed: Invalid signature.");
@@ -115,13 +116,62 @@ public class LicenseService : ILicenseService
 
         if (currentVersion < minRequiredVersion)
         {
-            _logger.LogCritical("This application version ({currentVersion}) is obsolete. Version {minRequiredVersion} or higher is required. Shutting down.", currentVersion, minRequiredVersion);
-            throw new Exception($"Application version {currentVersion} is too old. Please update to version {minRequiredVersion} or newer.");
+            _logger.LogCritical("This application version ({currentVersion}) is obsolete. Version {minRequiredVersion} or higher is required. Initiating auto-update.", currentVersion, minRequiredVersion);
+            InitiateUpdate(cache);
+            // The application will exit after this, so we don't need to throw.
+            return;
         }
 
         if (currentVersion < latestVersion)
         {
             _logger.LogWarning("A newer version of the application is available ({latestVersion}). Please consider updating.", latestVersion);
+        }
+    }
+
+    private void InitiateUpdate(LicenseCache license)
+    {
+        _logger.LogInformation("Starting update process...");
+        if (string.IsNullOrEmpty(license.DownloadUrl) || string.IsNullOrEmpty(license.FileHash))
+        {
+            _logger.LogCritical("Update cannot proceed: DownloadUrl or FileHash is missing from license data.");
+            // Fallback to old behavior if update info is missing
+            throw new Exception("Application version is obsolete, but update information is not available.");
+        }
+
+        try
+        {
+            var updaterPath = Path.Combine(AppContext.BaseDirectory, "MicroJack.Updater");
+             if (!File.Exists(updaterPath) && OperatingSystem.IsWindows())
+            {
+                updaterPath += ".exe";
+            }
+
+            if (!File.Exists(updaterPath))
+            {
+                 _logger.LogCritical($"Updater executable not found at '{updaterPath}'. Cannot proceed with auto-update.");
+                 throw new Exception("Update required, but the updater executable is missing.");
+            }
+
+            var installPath = AppContext.BaseDirectory;
+            var parentPid = Environment.ProcessId;
+
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = updaterPath,
+                Arguments = $"\"{license.DownloadUrl}\" \"{license.FileHash}\" \"{installPath}\" \"{parentPid}\"",
+                UseShellExecute = true, // UseShellExecute true for launching as a separate window/process
+                CreateNoWindow = false
+            };
+
+            Process.Start(processInfo);
+
+            _logger.LogInformation("Updater launched. This application will now exit.");
+            Environment.Exit(0);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "Failed to launch the updater process.");
+            throw; // Re-throw if we can't even launch the updater
         }
     }
 
