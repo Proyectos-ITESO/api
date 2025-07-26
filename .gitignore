@@ -49,3 +49,7 @@ Thumbs.db
 # Application specific
 microjack.db*
 encryption_key.txt
+
+*.so
+*.dylib
+*.a
