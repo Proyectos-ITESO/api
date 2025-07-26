@@ -22,4 +22,12 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Excluir el proyecto del servidor de licencias de la compilación del proyecto principal -->
+    <Compile Remove="licensing-server\**\*" />
+    <Content Remove="licensing-server\**\*" />
+    <EmbeddedResource Remove="licensing-server\**\*" />
+    <None Remove="licensing-server\**\*" />
+  </ItemGroup>
+
 </Project>

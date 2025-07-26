@@ -7,10 +7,17 @@ using MicroJack.API.Data;
 using MicroJack.API.Services;
 using MicroJack.API.Services.Interfaces;
 using MicroJack.API.Routes;
+using MicroJack.API.Models;
 using MicroJack.API.Models.Catalog;
 using MicroJack.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// --- 0. Configuración de Licencia ---
+builder.Services.Configure<LicenseSettings>(builder.Configuration.GetSection("LicenseSettings"));
+builder.Services.AddSingleton<ILicenseService, LicenseService>();
+builder.Services.AddHttpClient();
+
 
 // --- 1. Configuración de Servicios ---
 
@@ -144,6 +151,21 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// --- Validar Licencia ---
+try
+{
+    var licenseService = app.Services.GetRequiredService<ILicenseService>();
+    licenseService.ValidateLicense();
+    app.Logger.LogInformation("Validación de licencia exitosa.");
+}
+catch (Exception ex)
+{
+    app.Logger.LogCritical(ex, "La validación de la licencia falló. La aplicación se cerrará.");
+    // Terminar la aplicación si la validación falla
+    return; 
+}
+
 
 // Crear la base de datos y aplicar migraciones automáticamente
 using (var scope = app.Services.CreateScope())
