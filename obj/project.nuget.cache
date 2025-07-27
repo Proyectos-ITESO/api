@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "S3Et4CWCJCk=",
+  "dgSpecHash": "he9jUYcWf60=",
   "success": true,
   "projectFilePath": "/home/mike/Documents/Trabajo/RKS/MicroJack.API/MicroJack.API.csproj",
   "expectedPackageFiles": [
@@ -79,6 +79,8 @@
     "/home/mike/.nuget/packages/system.text.encoding.codepages/8.0.0/system.text.encoding.codepages.8.0.0.nupkg.sha512",
     "/home/mike/.nuget/packages/system.threading.channels/6.0.0/system.threading.channels.6.0.0.nupkg.sha512",
     "/home/mike/.nuget/packages/webdrivermanager/2.17.4/webdrivermanager.2.17.4.nupkg.sha512",
+    "/home/mike/.nuget/packages/microsoft.netcore.app.runtime.linux-x64/8.0.18/microsoft.netcore.app.runtime.linux-x64.8.0.18.nupkg.sha512",
+    "/home/mike/.nuget/packages/microsoft.aspnetcore.app.runtime.linux-x64/8.0.18/microsoft.aspnetcore.app.runtime.linux-x64.8.0.18.nupkg.sha512",
     "/home/mike/.nuget/packages/microsoft.netcore.app.host.linux-x64/8.0.18/microsoft.netcore.app.host.linux-x64.8.0.18.nupkg.sha512"
   ],
   "logs": []

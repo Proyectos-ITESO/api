@@ -88,9 +88,29 @@ public class LicenseService : ILicenseService
         
         // Parse server response first
         var serverResponse = JsonConvert.DeserializeObject<dynamic>(jsonResponse);
-        if (serverResponse == null || string.IsNullOrEmpty((string)serverResponse.signature))
+        if (serverResponse == null)
         {
-            throw new Exception("Invalid response from license server.");
+            throw new Exception("Invalid response from license server: null response.");
+        }
+        
+        // Check required fields
+        string? signature = (string?)serverResponse.signature;
+        string? expirationDate = (string?)serverResponse.expirationDate;
+        string? nextVerificationDate = (string?)serverResponse.nextVerificationDate;
+        
+        if (string.IsNullOrEmpty(signature))
+        {
+            throw new Exception("Invalid response from license server: missing signature.");
+        }
+        
+        if (string.IsNullOrEmpty(expirationDate))
+        {
+            throw new Exception("Invalid response from license server: missing expiration date.");
+        }
+        
+        if (string.IsNullOrEmpty(nextVerificationDate))
+        {
+            throw new Exception("Invalid response from license server: missing next verification date.");
         }
 
         // Map server response to LicenseCache model
@@ -98,10 +118,10 @@ public class LicenseService : ILicenseService
         {
             LicenseKey = _licenseSettings.LicenseKey,
             MachineId = machineId,
-            ExpirationDate = DateTime.Parse((string)serverResponse.expirationDate),
+            ExpirationDate = ParseServerDate(expirationDate),
             EnabledFeatures = ((Newtonsoft.Json.Linq.JArray)serverResponse.enabledFeatures).ToObject<List<string>>() ?? new(),
-            NextVerificationDate = DateTime.Parse((string)serverResponse.nextVerificationDate, null, System.Globalization.DateTimeStyles.RoundtripKind), // Use exact format from server
-            Signature = (string)serverResponse.signature,
+            NextVerificationDate = ParseServerDate(nextVerificationDate),
+            Signature = signature,
             LatestVersion = (string)serverResponse.latestVersion,
             MinimumRequiredVersion = (string)serverResponse.minimumRequiredVersion,
             DownloadUrl = (string)serverResponse.downloadUrl,
@@ -251,7 +271,7 @@ public class LicenseService : ILicenseService
         }
     }
 
-    private LicenseCache LoadLicenseCache()
+    private LicenseCache? LoadLicenseCache()
     {
         if (!File.Exists(_cachePath)) return null;
         var json = File.ReadAllText(_cachePath);
@@ -281,6 +301,54 @@ public class LicenseService : ILicenseService
             _logger.LogError(ex, "Error during signature verification.");
             return false;
         }
+    }
+
+    private DateTime ParseServerDate(string dateString)
+    {
+        if (string.IsNullOrEmpty(dateString))
+        {
+            throw new ArgumentException("Date string cannot be null or empty", nameof(dateString));
+        }
+
+        // Try multiple date formats that the server might return
+        var formats = new[]
+        {
+            "yyyy-MM-ddTHH:mm:ss.fffffffZ", // ISO 8601 with milliseconds and Z
+            "yyyy-MM-ddTHH:mm:ss.fffZ",     // ISO 8601 with milliseconds and Z
+            "yyyy-MM-ddTHH:mm:ssZ",         // ISO 8601 with Z
+            "yyyy-MM-ddTHH:mm:ss",          // ISO 8601 without Z
+            "MM/dd/yyyy HH:mm:ss",          // US format with time
+            "MM/dd/yyyy",                   // US date only
+            "M/d/yyyy H:m:s",               // US format with single digits
+            "M/d/yyyy",                     // US date only with single digits
+            "yyyy-MM-dd HH:mm:ss",          // SQL format
+            "yyyy-MM-dd"                    // Date only
+        };
+
+        // Try parsing with invariant culture first (for ISO formats)
+        foreach (var format in formats)
+        {
+            if (DateTime.TryParseExact(dateString, format, System.Globalization.CultureInfo.InvariantCulture, 
+                System.Globalization.DateTimeStyles.None, out var result))
+            {
+                return result;
+            }
+        }
+
+        // If exact formats fail, try general parsing with US culture (for server dates like "12/31/2025 00:00:00")
+        if (DateTime.TryParse(dateString, System.Globalization.CultureInfo.GetCultureInfo("en-US"), 
+            System.Globalization.DateTimeStyles.None, out var generalResult))
+        {
+            return generalResult;
+        }
+
+        // Last resort: try with current culture
+        if (DateTime.TryParse(dateString, out var currentCultureResult))
+        {
+            return currentCultureResult;
+        }
+
+        throw new FormatException($"Unable to parse date string '{dateString}' with any known format.");
     }
 
     private string GenerateMachineId()
