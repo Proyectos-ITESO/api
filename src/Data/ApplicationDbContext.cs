@@ -12,6 +12,59 @@ public class ApplicationDbContext : DbContext
     {
     }
 
+    public override int SaveChanges()
+    {
+        SetTimestamps();
+        return base.SaveChanges();
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        SetTimestamps();
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void SetTimestamps()
+    {
+        var currentTime = DateTime.Now; // Usa la hora local de la máquina
+
+        var entities = ChangeTracker.Entries()
+            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
+
+        foreach (var entity in entities)
+        {
+            // Para entidades que tienen CreatedAt
+            if (entity.State == EntityState.Added)
+            {
+                var createdAtProperty = entity.Entity.GetType().GetProperty("CreatedAt");
+                if (createdAtProperty != null && createdAtProperty.PropertyType == typeof(DateTime))
+                {
+                    createdAtProperty.SetValue(entity.Entity, currentTime);
+                }
+            }
+
+            // Para entidades que tienen UpdatedAt
+            if (entity.State == EntityState.Modified)
+            {
+                var updatedAtProperty = entity.Entity.GetType().GetProperty("UpdatedAt");
+                if (updatedAtProperty != null && updatedAtProperty.PropertyType == typeof(DateTime?))
+                {
+                    updatedAtProperty.SetValue(entity.Entity, currentTime);
+                }
+            }
+
+            // Para GuardRole que tiene AssignedAt
+            if (entity.State == EntityState.Added && entity.Entity is GuardRole)
+            {
+                var assignedAtProperty = entity.Entity.GetType().GetProperty("AssignedAt");
+                if (assignedAtProperty != null && assignedAtProperty.PropertyType == typeof(DateTime))
+                {
+                    assignedAtProperty.SetValue(entity.Entity, currentTime);
+                }
+            }
+        }
+    }
+
     // Legacy tables removed - using new normalized entities
     
     // Pre-registration system

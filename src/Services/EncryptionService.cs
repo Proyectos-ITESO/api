@@ -9,7 +9,9 @@ namespace MicroJack.API.Services
         
         public static string GetOrCreateDatabaseKey()
         {
-            var keyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, KeyFileName);
+            // Use a writable directory instead of the application base directory
+            var dataDirectory = GetDataDirectory();
+            var keyPath = Path.Combine(dataDirectory, KeyFileName);
             
             if (File.Exists(keyPath))
             {
@@ -35,6 +37,34 @@ namespace MicroJack.API.Services
             }
             
             return key;
+        }
+        
+        private static string GetDataDirectory()
+        {
+            // Check for environment variable first (for containerized/packaged apps)
+            var dataDir = Environment.GetEnvironmentVariable("MICROJACK_DATA_DIR");
+            if (!string.IsNullOrEmpty(dataDir) && Directory.Exists(dataDir))
+            {
+                return dataDir;
+            }
+            
+            // Use current working directory if writable, otherwise use user data directory
+            var currentDir = Directory.GetCurrentDirectory();
+            try
+            {
+                var testFile = Path.Combine(currentDir, ".write_test");
+                File.WriteAllText(testFile, "test");
+                File.Delete(testFile);
+                return currentDir;
+            }
+            catch
+            {
+                // Current directory is not writable, use user data directory
+                var userDataDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var appDataDir = Path.Combine(userDataDir, "MicroJack");
+                Directory.CreateDirectory(appDataDir);
+                return appDataDir;
+            }
         }
     }
 }

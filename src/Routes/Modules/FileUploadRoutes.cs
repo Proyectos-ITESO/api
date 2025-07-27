@@ -105,6 +105,7 @@ namespace MicroJack.API.Routes.Modules
                 }
             })
             .RequireAuthorization("GuardLevel")
+            .DisableAntiforgery()
             .WithName("UploadImage")
             .WithSummary("Upload an image file (face, INE, license plate, etc.)")
             .Accepts<IFormFile>("multipart/form-data")
@@ -227,6 +228,7 @@ namespace MicroJack.API.Routes.Modules
                 }
             })
             .RequireAuthorization("GuardLevel")
+            .DisableAntiforgery()
             .WithName("UploadMultipleImages")
             .WithSummary("Upload multiple image files at once")
             .Accepts<IFormFileCollection>("multipart/form-data")

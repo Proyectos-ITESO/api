@@ -30,7 +30,7 @@ namespace MicroJack.API.Models.Transaction
 
         public EventLog()
         {
-            Timestamp = DateTime.UtcNow;
+            Timestamp = DateTime.Now; // Usar hora local de la máquina
         }
     }
 }

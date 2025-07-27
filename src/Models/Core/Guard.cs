@@ -63,7 +63,7 @@ namespace MicroJack.API.Models.Core
 
         public Guard()
         {
-            CreatedAt = DateTime.UtcNow;
+            CreatedAt = DateTime.Now; // Usar hora local de la máquina
         }
     }
 }

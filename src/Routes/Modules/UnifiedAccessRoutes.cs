@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 using MicroJack.API.Services.Interfaces;
 using MicroJack.API.Models.Core;
 using MicroJack.API.Models.Transaction;
@@ -96,8 +97,11 @@ namespace MicroJack.API.Routes.Modules
                         }
                     }
 
-                    // 3. Validate resident if specified
+                    // 3. Resolve Address and Resident
                     Resident? resident = null;
+                    int addressId;
+
+                    // Resident is optional, but if provided, we validate it.
                     if (request.ResidentId.HasValue)
                     {
                         resident = await residentService.GetResidentByIdAsync(request.ResidentId.Value);
@@ -110,12 +114,57 @@ namespace MicroJack.API.Routes.Modules
                         }
                     }
 
+                    // Address is resolved via the 'House' string or AddressId. At least one is required.
+                    if (string.IsNullOrWhiteSpace(request.House) && !request.AddressId.HasValue)
+                    {
+                        return Results.BadRequest(new { success = false, message = "House identifier or AddressId is required." });
+                    }
+
+                    var addressService = context.RequestServices.GetRequiredService<IAddressService>();
+
+                    // If AddressId is provided, use it directly
+                    if (request.AddressId.HasValue)
+                    {
+                        var addressById = await addressService.GetAddressByIdAsync(request.AddressId.Value);
+                        if (addressById == null)
+                        {
+                            return Results.BadRequest(new { 
+                                success = false, 
+                                message = $"Address with ID {request.AddressId} not found" 
+                            });
+                        }
+                        addressId = addressById.Id;
+                    }
+                    else
+                    {
+                        // Use House string to find or create address
+                        var addresses = await addressService.GetAllAddressesAsync();
+                        var targetAddress = addresses.FirstOrDefault(a => a.Identifier.Equals(request.House, StringComparison.OrdinalIgnoreCase));
+
+                        if (targetAddress != null)
+                        {
+                            addressId = targetAddress.Id;
+                        }
+                        else
+                        {
+                            // Create a new address since it doesn't exist
+                            var newAddress = new MicroJack.API.Models.Core.Address
+                            {
+                                Identifier = request.House,
+                                Extension = "000", // Default value
+                                Status = "Active"
+                            };
+                            var createdAddress = await addressService.CreateAddressAsync(newAddress);
+                            addressId = createdAddress.Id;
+                        }
+                    }
+
                     // 4. Create access log entry
                     var accessLog = new AccessLog
                     {
                         VisitorId = visitor.Id,
                         VehicleId = vehicle?.Id,
-                        AddressId = resident?.AddressId ?? 1, // Default address if no resident
+                        AddressId = addressId, // Use the resolved address ID
                         ResidentVisitedId = resident?.Id,
                         EntryTimestamp = request.EntryTime ?? DateTime.UtcNow,
                         Comments = request.Notes,
@@ -272,6 +321,10 @@ namespace MicroJack.API.Routes.Modules
         public VehicleRequest? Vehicle { get; set; }
         
         public int? ResidentId { get; set; }
+        
+        public int? AddressId { get; set; } // Direct address ID
+        
+        public string? House { get; set; } // House/Address as string
         
         [Required]
         public string Purpose { get; set; } = string.Empty;

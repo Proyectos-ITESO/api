@@ -22,7 +22,35 @@ public class LicenseService : ILicenseService
         _logger = logger;
         _licenseSettings = licenseSettings.Value;
         _httpClientFactory = httpClientFactory;
-        _cachePath = Path.Combine(env.ContentRootPath, "license.cache");
+        _cachePath = Path.Combine(GetDataDirectory(), "license.cache");
+    }
+    
+    private static string GetDataDirectory()
+    {
+        // Check for environment variable first (for containerized/packaged apps)
+        var dataDir = Environment.GetEnvironmentVariable("MICROJACK_DATA_DIR");
+        if (!string.IsNullOrEmpty(dataDir) && Directory.Exists(dataDir))
+        {
+            return dataDir;
+        }
+        
+        // Use current working directory if writable, otherwise use user data directory
+        var currentDir = Directory.GetCurrentDirectory();
+        try
+        {
+            var testFile = Path.Combine(currentDir, ".write_test");
+            File.WriteAllText(testFile, "test");
+            File.Delete(testFile);
+            return currentDir;
+        }
+        catch
+        {
+            // Current directory is not writable, use user data directory
+            var userDataDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var appDataDir = Path.Combine(userDataDir, "MicroJack");
+            Directory.CreateDirectory(appDataDir);
+            return appDataDir;
+        }
     }
 
     public void ValidateLicense()

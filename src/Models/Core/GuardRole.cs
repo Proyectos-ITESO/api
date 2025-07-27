@@ -34,7 +34,7 @@ namespace MicroJack.API.Models.Core
 
         public GuardRole()
         {
-            AssignedAt = DateTime.UtcNow;
+            AssignedAt = DateTime.Now; // Usar hora local de la máquina
         }
     }
 }

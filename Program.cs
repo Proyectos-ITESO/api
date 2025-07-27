@@ -30,13 +30,55 @@ builder.Services.AddLogging(loggingBuilder =>
 
 // Configurar SQLite encriptado con Entity Framework Core
 var dbKey = MicroJack.API.Services.EncryptionService.GetOrCreateDatabaseKey();
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? $"Data Source=microjack.db;Password={dbKey}";
 
-// Agregar la clave de encriptación si no está presente
-if (!connectionString.Contains("Password="))
+// Get database path from configuration or use data directory
+var dbPath = GetDatabasePath(builder.Configuration);
+var connectionString = $"Data Source={dbPath};Password={dbKey}";
+
+Console.WriteLine($"Using database path: {dbPath}");
+
+static string GetDatabasePath(IConfiguration configuration)
 {
-    connectionString += $";Password={dbKey}";
+    var configConnection = configuration.GetConnectionString("DefaultConnection");
+    
+    // If connection string specifies an absolute path, use it
+    if (!string.IsNullOrEmpty(configConnection) && configConnection.Contains("Data Source="))
+    {
+        var dataSourcePart = configConnection.Split(';').FirstOrDefault(s => s.StartsWith("Data Source="));
+        if (dataSourcePart != null)
+        {
+            var dbPath = dataSourcePart.Replace("Data Source=", "").Trim();
+            if (Path.IsPathRooted(dbPath))
+            {
+                return dbPath;
+            }
+        }
+    }
+    
+    // Use data directory for database
+    var dataDir = Environment.GetEnvironmentVariable("MICROJACK_DATA_DIR");
+    if (!string.IsNullOrEmpty(dataDir) && Directory.Exists(dataDir))
+    {
+        return Path.Combine(dataDir, "microjack.db");
+    }
+    
+    // Use current working directory if writable, otherwise use user data directory
+    var currentDir = Directory.GetCurrentDirectory();
+    try
+    {
+        var testFile = Path.Combine(currentDir, ".write_test");
+        File.WriteAllText(testFile, "test");
+        File.Delete(testFile);
+        return Path.Combine(currentDir, "microjack.db");
+    }
+    catch
+    {
+        // Current directory is not writable, use user data directory
+        var userDataDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var appDataDir = Path.Combine(userDataDir, "MicroJack");
+        Directory.CreateDirectory(appDataDir);
+        return Path.Combine(appDataDir, "microjack.db");
+    }
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

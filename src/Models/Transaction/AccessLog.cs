@@ -86,9 +86,10 @@ namespace MicroJack.API.Models.Transaction
 
         public AccessLog()
         {
-            CreatedAt = DateTime.UtcNow;
-            UpdatedAt = DateTime.UtcNow;
-            EntryTimestamp = DateTime.UtcNow;
+            var currentTime = DateTime.Now; // Usar hora local de la máquina
+            CreatedAt = currentTime;
+            UpdatedAt = currentTime;
+            EntryTimestamp = currentTime;
         }
     }
 }
