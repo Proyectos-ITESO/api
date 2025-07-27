@@ -70,7 +70,7 @@ public class LicenseService : ILicenseService
         {
             LicenseKey = _licenseSettings.LicenseKey,
             MachineId = machineId,
-            ExpirationDate = DateTime.Parse((string)serverResponse.expirationDate),
+            ExpirationDate = DateTime.ParseExact((string)serverResponse.expirationDate, "MM/dd/yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture),
             EnabledFeatures = ((Newtonsoft.Json.Linq.JArray)serverResponse.enabledFeatures).ToObject<List<string>>() ?? new(),
             NextVerificationDate = DateTime.Parse((string)serverResponse.nextVerificationDate, null, System.Globalization.DateTimeStyles.RoundtripKind), // Use exact format from server
             Signature = (string)serverResponse.signature,
