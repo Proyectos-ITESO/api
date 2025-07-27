@@ -44,20 +44,54 @@ public class LicenseService : ILicenseService
         _logger.LogInformation("Attempting online license validation...");
         var machineId = GenerateMachineId();
         var client = _httpClientFactory.CreateClient();
-        var validationUrl = $"{_licenseSettings.UpdateServerUrl}?licenseKey={_licenseSettings.LicenseKey}&machineId={machineId}";
+        
+        var baseUrl = _licenseSettings.UpdateServerUrl;
+        var queryString = $"licenseKey={_licenseSettings.LicenseKey}&machineId={machineId}";
+        
+        var validationUrl = baseUrl.Contains("?") 
+            ? $"{baseUrl}&{queryString}" 
+            : $"{baseUrl}?{queryString}";
 
         HttpResponseMessage response = await client.GetAsync(validationUrl);
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
-        var licenseCache = JsonConvert.DeserializeObject<LicenseCache>(jsonResponse);
-
-        if (licenseCache == null || string.IsNullOrEmpty(licenseCache.Signature))
+        _logger.LogInformation("License server response: {JsonResponse}", jsonResponse);
+        
+        // Parse server response first
+        var serverResponse = JsonConvert.DeserializeObject<dynamic>(jsonResponse);
+        if (serverResponse == null || string.IsNullOrEmpty((string)serverResponse.signature))
         {
             throw new Exception("Invalid response from license server.");
         }
 
-        var dataToVerify = $"{licenseCache.LicenseKey}{licenseCache.ExpirationDate:o}{string.Join(",", licenseCache.EnabledFeatures)}{licenseCache.NextVerificationDate:o}{licenseCache.LatestVersion}{licenseCache.MinimumRequiredVersion}{licenseCache.DownloadUrl}{licenseCache.FileHash}";
+        // Map server response to LicenseCache model
+        var licenseCache = new LicenseCache
+        {
+            LicenseKey = _licenseSettings.LicenseKey,
+            MachineId = machineId,
+            ExpirationDate = DateTime.Parse((string)serverResponse.expirationDate),
+            EnabledFeatures = ((Newtonsoft.Json.Linq.JArray)serverResponse.enabledFeatures).ToObject<List<string>>() ?? new(),
+            NextVerificationDate = DateTime.Parse((string)serverResponse.nextVerificationDate, null, System.Globalization.DateTimeStyles.RoundtripKind), // Use exact format from server
+            Signature = (string)serverResponse.signature,
+            LatestVersion = (string)serverResponse.latestVersion,
+            MinimumRequiredVersion = (string)serverResponse.minimumRequiredVersion,
+            DownloadUrl = (string)serverResponse.downloadUrl,
+            FileHash = (string)serverResponse.fileHash
+        };
+        
+        _logger.LogInformation("Mapped license cache: LicenseKey={LicenseKey}, MachineId={MachineId}, Signature={Signature}", 
+            licenseCache.LicenseKey, licenseCache.MachineId, licenseCache.Signature);
+
+        // Use the exact strings from server JSON to preserve formatting without date parsing
+        var nextVerificationMatch = System.Text.RegularExpressions.Regex.Match(jsonResponse, @"""nextVerificationDate"":""([^""]+)""");
+        var expirationDateMatch = System.Text.RegularExpressions.Regex.Match(jsonResponse, @"""expirationDate"":""([^""]+)""");
+        var nextVerificationStr = nextVerificationMatch.Success ? nextVerificationMatch.Groups[1].Value : "";
+        var expirationDateStr = expirationDateMatch.Success ? expirationDateMatch.Groups[1].Value : "";
+        var dataToVerify = $"{licenseCache.LicenseKey}{expirationDateStr}{string.Join(",", licenseCache.EnabledFeatures)}{nextVerificationStr}{licenseCache.LatestVersion}{licenseCache.MinimumRequiredVersion}{licenseCache.DownloadUrl}{licenseCache.FileHash}";
+        _logger.LogInformation("Data to verify: {DataToVerify}", dataToVerify);
+        _logger.LogInformation("Signature from server: {Signature}", licenseCache.Signature);
+        
         if (!VerifySignature(dataToVerify, licenseCache.Signature, _licenseSettings.PublicKey))
         {
             throw new Exception("Invalid signature from license server.");
@@ -86,7 +120,21 @@ public class LicenseService : ILicenseService
             throw new Exception("License validation failed. Please connect to the internet to refresh your license.");
         }
 
-        var dataToVerify = $"{cache.LicenseKey}{cache.ExpirationDate:o}{string.Join(",", cache.EnabledFeatures)}{cache.NextVerificationDate:o}{cache.LatestVersion}{cache.MinimumRequiredVersion}{cache.DownloadUrl}{cache.FileHash}";
+        // Use the same date format logic as online validation by serializing to JSON and extracting
+        var tempCache = new { 
+            expirationDate = cache.ExpirationDate, 
+            nextVerificationDate = cache.NextVerificationDate 
+        };
+        var jsonString = System.Text.Json.JsonSerializer.Serialize(tempCache, new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+        });
+        var nextVerificationMatch = System.Text.RegularExpressions.Regex.Match(jsonString, @"""nextVerificationDate"":""([^""]+)""");
+        var expirationDateMatch = System.Text.RegularExpressions.Regex.Match(jsonString, @"""expirationDate"":""([^""]+)""");
+        var nextVerificationStr = nextVerificationMatch.Success ? nextVerificationMatch.Groups[1].Value : "";
+        var expirationDateStr = expirationDateMatch.Success ? expirationDateMatch.Groups[1].Value : "";
+        
+        var dataToVerify = $"{cache.LicenseKey}{expirationDateStr}{string.Join(",", cache.EnabledFeatures)}{nextVerificationStr}{cache.LatestVersion}{cache.MinimumRequiredVersion}{cache.DownloadUrl}{cache.FileHash}";
         if (!VerifySignature(dataToVerify, cache.Signature, _licenseSettings.PublicKey))
         {
             _logger.LogError("Offline validation failed: Invalid signature.");

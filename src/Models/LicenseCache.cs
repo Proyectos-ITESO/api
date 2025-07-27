@@ -3,6 +3,7 @@ namespace MicroJack.API.Models;
 public class LicenseCache
 {
     public string LicenseKey { get; set; } = string.Empty;
+    public string MachineId { get; set; } = string.Empty;
     public DateTime ExpirationDate { get; set; }
     public List<string> EnabledFeatures { get; set; } = new();
     public DateTime NextVerificationDate { get; set; }
