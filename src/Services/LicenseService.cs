@@ -118,7 +118,7 @@ public class LicenseService : ILicenseService
         {
             LicenseKey = _licenseSettings.LicenseKey,
             MachineId = machineId,
-            ExpirationDate = ParseServerDate(expirationDate),
+            ExpirationDate = DateTime.ParseExact((string)serverResponse.expirationDate, "MM/dd/yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture),
             EnabledFeatures = ((Newtonsoft.Json.Linq.JArray)serverResponse.enabledFeatures).ToObject<List<string>>() ?? new(),
             NextVerificationDate = ParseServerDate(nextVerificationDate),
             Signature = signature,
