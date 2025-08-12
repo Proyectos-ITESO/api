@@ -4001,19 +4001,19 @@
     ]
   },
   "packageFolders": {
-    "/home/emfr/.nuget/packages/": {}
+    "/home/jules/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/emfr/chambas/Insano/realGforLife/api/MicroJack.API.csproj",
+      "projectUniqueName": "/app/MicroJack.API.csproj",
       "projectName": "MicroJack.API",
-      "projectPath": "/home/emfr/chambas/Insano/realGforLife/api/MicroJack.API.csproj",
-      "packagesPath": "/home/emfr/.nuget/packages/",
-      "outputPath": "/home/emfr/chambas/Insano/realGforLife/api/obj/",
+      "projectPath": "/app/MicroJack.API.csproj",
+      "packagesPath": "/home/jules/.nuget/packages/",
+      "outputPath": "/app/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/emfr/.nuget/NuGet/NuGet.Config"
+        "/home/jules/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -4031,6 +4031,11 @@
         "warnAsError": [
           "NU1605"
         ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -4109,7 +4114,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/8.0.110/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/home/jules/.dotnet/sdk/8.0.413/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

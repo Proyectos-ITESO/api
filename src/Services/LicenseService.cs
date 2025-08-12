@@ -88,6 +88,11 @@ public class LicenseService : ILicenseService
         var expirationDateMatch = System.Text.RegularExpressions.Regex.Match(jsonResponse, @"""expirationDate"":""([^""]+)""");
         var nextVerificationStr = nextVerificationMatch.Success ? nextVerificationMatch.Groups[1].Value : "";
         var expirationDateStr = expirationDateMatch.Success ? expirationDateMatch.Groups[1].Value : "";
+
+        // Store raw strings in cache
+        licenseCache.NextVerificationDateString = nextVerificationStr;
+        licenseCache.ExpirationDateString = expirationDateStr;
+
         var dataToVerify = $"{licenseCache.LicenseKey}{expirationDateStr}{string.Join(",", licenseCache.EnabledFeatures)}{nextVerificationStr}{licenseCache.LatestVersion}{licenseCache.MinimumRequiredVersion}{licenseCache.DownloadUrl}{licenseCache.FileHash}";
         _logger.LogInformation("Data to verify: {DataToVerify}", dataToVerify);
         _logger.LogInformation("Signature from server: {Signature}", licenseCache.Signature);
@@ -120,21 +125,14 @@ public class LicenseService : ILicenseService
             throw new Exception("License validation failed. Please connect to the internet to refresh your license.");
         }
 
-        // Use the same date format logic as online validation by serializing to JSON and extracting
-        var tempCache = new { 
-            expirationDate = cache.ExpirationDate, 
-            nextVerificationDate = cache.NextVerificationDate 
-        };
-        var jsonString = System.Text.Json.JsonSerializer.Serialize(tempCache, new System.Text.Json.JsonSerializerOptions
+        // Use the stored raw date strings to ensure format consistency
+        if (string.IsNullOrEmpty(cache.ExpirationDateString) || string.IsNullOrEmpty(cache.NextVerificationDateString))
         {
-            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-        });
-        var nextVerificationMatch = System.Text.RegularExpressions.Regex.Match(jsonString, @"""nextVerificationDate"":""([^""]+)""");
-        var expirationDateMatch = System.Text.RegularExpressions.Regex.Match(jsonString, @"""expirationDate"":""([^""]+)""");
-        var nextVerificationStr = nextVerificationMatch.Success ? nextVerificationMatch.Groups[1].Value : "";
-        var expirationDateStr = expirationDateMatch.Success ? expirationDateMatch.Groups[1].Value : "";
-        
-        var dataToVerify = $"{cache.LicenseKey}{expirationDateStr}{string.Join(",", cache.EnabledFeatures)}{nextVerificationStr}{cache.LatestVersion}{cache.MinimumRequiredVersion}{cache.DownloadUrl}{cache.FileHash}";
+            _logger.LogError("Offline validation failed: Cached license is missing raw date strings. Please connect to the internet once to refresh the cache.");
+            throw new Exception("License validation failed. The license cache is outdated.");
+        }
+
+        var dataToVerify = $"{cache.LicenseKey}{cache.ExpirationDateString}{string.Join(",", cache.EnabledFeatures)}{cache.NextVerificationDateString}{cache.LatestVersion}{cache.MinimumRequiredVersion}{cache.DownloadUrl}{cache.FileHash}";
         if (!VerifySignature(dataToVerify, cache.Signature, _licenseSettings.PublicKey))
         {
             _logger.LogError("Offline validation failed: Invalid signature.");

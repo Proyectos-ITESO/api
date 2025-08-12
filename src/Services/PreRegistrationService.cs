@@ -9,11 +9,13 @@ namespace MicroJack.API.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PreRegistrationService> _logger;
+        private readonly IWhatsAppService _whatsAppService;
 
-        public PreRegistrationService(ApplicationDbContext context, ILogger<PreRegistrationService> logger)
+        public PreRegistrationService(ApplicationDbContext context, ILogger<PreRegistrationService> logger, IWhatsAppService whatsAppService)
         {
             _context = context;
             _logger = logger;
+            _whatsAppService = whatsAppService;
         }
 
         public async Task<List<PreRegistration>> GetAllPreRegistrationsAsync()
@@ -109,8 +111,39 @@ namespace MicroJack.API.Services
 
                 _context.PreRegistrations.Add(preRegistration);
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Created pre-registration with ID {Id} for plates: {Plates}", preRegistration.Id, preRegistration.Plates);
 
-                _logger.LogInformation("Created pre-registration with plates: {Plates}", preRegistration.Plates);
+                // After creating, send WhatsApp notification
+                try
+                {
+                    var address = await _context.Addresses
+                        .Include(a => a.RepresentativeResident)
+                        .FirstOrDefaultAsync(a => a.Identifier == preRegistration.HouseVisited);
+
+                    if (address?.RepresentativeResident != null && !string.IsNullOrEmpty(address.RepresentativeResident.Phone))
+                    {
+                        _logger.LogInformation("Found representative resident {ResidentName} for address {Address}. Sending notification.",
+                            address.RepresentativeResident.FullName, address.Identifier);
+
+                        await _whatsAppService.SendPreRegistrationNotificationAsync(
+                            address.RepresentativeResident.Phone,
+                            address.RepresentativeResident.FullName,
+                            preRegistration.VisitorName,
+                            preRegistration.ExpectedArrivalTime
+                        );
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Could not find a representative resident with a phone number for address identifier '{Identifier}' to send notification.",
+                            preRegistration.HouseVisited);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log the error but don't let it crash the main operation
+                    _logger.LogError(ex, "Failed to send WhatsApp notification for pre-registration {Id}.", preRegistration.Id);
+                }
+
                 return preRegistration;
             }
             catch (Exception ex)

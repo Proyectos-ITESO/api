@@ -47,10 +47,11 @@ extract_token() {
 }
 
 echo ""
-echo "🗑️  Step 1: Delete existing database"
-rm -f /home/emfr/chambas/Insano/realGforLife/api/microjack.db
+echo "🗑️  Step 1: Clean up previous run artifacts"
+rm -f microjack.db
+rm -f license.cache
 sleep 1 # Give filesystem time to process deletion
-echo "✅ Database deleted successfully"
+echo "✅ Database and license cache deleted successfully"
 
 echo ""
 echo "⏳ Step 2: Wait for application to be ready (10 seconds)"
@@ -301,13 +302,13 @@ fi
 
 echo ""
 echo "12.2 - Test PreRegistration endpoint"
-prereg_data="{\"plates\":\"PREREG-$(date +%s)\",\"visitorName\":\"PreReg Test\",\"brand\":\"Nissan\",\"color\":\"Blue\",\"houseVisited\":\"Coto Los Pinos - Casa 2\",\"arrivalDateTime\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"personVisited\":\"John Doe\",\"status\":\"PENDIENTE\"}"  
-prereg_response=$(api_call POST "/api/preregistrations" "$prereg_data")
+prereg_data="{\"plates\":\"PREREG-$(date +%s)\",\"visitorName\":\"PreReg Test\",\"vehicleBrand\":\"Nissan\",\"vehicleColor\":\"Blue\",\"houseVisited\":\"Coto Los Pinos - Casa 2\",\"expectedArrivalTime\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"personVisited\":\"John Doe\",\"status\":\"PENDIENTE\"}"
+prereg_response=$(api_call POST "/api/preregistro" "$prereg_data")
 echo "$prereg_response" | jq .
-if echo "$prereg_response" | jq -e '.id' > /dev/null; then
-    echo "✅ Legacy PreRegistration: PASSED"
+if echo "$prereg_response" | jq -e '.success' > /dev/null; then
+    echo "✅ PreRegistration Creation: PASSED"
 else
-    echo "❌ Legacy PreRegistration: FAILED"
+    echo "❌ PreRegistration Creation: FAILED"
 fi
 
 echo ""

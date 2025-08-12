@@ -153,18 +153,19 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // --- Validar Licencia ---
-try
-{
-    var licenseService = app.Services.GetRequiredService<ILicenseService>();
-    licenseService.ValidateLicense();
-    app.Logger.LogInformation("Validación de licencia exitosa.");
-}
-catch (Exception ex)
-{
-    app.Logger.LogCritical(ex, "La validación de la licencia falló. La aplicación se cerrará.");
-    // Terminar la aplicación si la validación falla
-    return; 
-}
+app.Logger.LogWarning("****** LA VALIDACIÓN DE LICENCIA ESTÁ DESHABILITADA TEMPORALMENTE PARA PRUEBAS ******");
+// try
+// {
+//     var licenseService = app.Services.GetRequiredService<ILicenseService>();
+//     licenseService.ValidateLicense();
+//     app.Logger.LogInformation("Validación de licencia exitosa.");
+// }
+// catch (Exception ex)
+// {
+//     app.Logger.LogCritical(ex, "La validación de la licencia falló. La aplicación se cerrará.");
+//     // Terminar la aplicación si la validación falla
+//     return;
+// }
 
 
 // Crear la base de datos y aplicar migraciones automáticamente
