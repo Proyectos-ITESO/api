@@ -14,8 +14,11 @@ using MicroJack.API.Middleware;
 var builder = WebApplication.CreateBuilder(args);
 
 // --- 0. Configuración de Licencia ---
+// SERVICIOS DE LICENCIA DESHABILITADOS TEMPORALMENTE
+/*
 builder.Services.Configure<LicenseSettings>(builder.Configuration.GetSection("LicenseSettings"));
 builder.Services.AddSingleton<ILicenseService, LicenseService>();
+*/
 builder.Services.AddHttpClient();
 
 
@@ -195,6 +198,8 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // --- Validar Licencia ---
+// LICENCIA DESHABILITADA TEMPORALMENTE
+/*
 try
 {
     var licenseService = app.Services.GetRequiredService<ILicenseService>();
@@ -207,6 +212,8 @@ catch (Exception ex)
     // Terminar la aplicación si la validación falla
     return; 
 }
+*/
+app.Logger.LogInformation("Validación de licencia DESHABILITADA - modo desarrollo.");
 
 
 // Crear la base de datos y aplicar migraciones automáticamente

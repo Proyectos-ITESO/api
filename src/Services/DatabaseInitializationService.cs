@@ -225,7 +225,7 @@ namespace MicroJack.API.Services
 
         private async Task SeedTestDataAsync()
         {
-            // Seed test addresses first
+            // Seed addresses with current real data
             if (!await _context.Addresses.AnyAsync())
             {
                 var testAddresses = new[]
@@ -234,61 +234,71 @@ namespace MicroJack.API.Services
                     {
                         Identifier = "102",
                         Extension = "102-1",
-                        Status = "Activa"
-                    },
-                    new Address
-                    {
-                        Identifier = "5",
-                        Extension = "5-A",
-                        Status = "Activa"
-                    },
-                    new Address
-                    {
-                        Identifier = "207",
-                        Extension = "207-2",
-                        Status = "Activa"
+                        Status = "Activa",
+                        Message = "Mensaje actualizado: Casa con jardín amplio - Familia de 3 personas"
                     },
                     new Address
                     {
                         Identifier = "15",
                         Extension = "15-B",
-                        Status = "Activa"
-                    },
-                    new Address
-                    {
-                        Identifier = "301",
-                        Extension = "301-3",
-                        Status = "Activa"
-                    },
-                    new Address
-                    {
-                        Identifier = "42",
-                        Extension = "42-C",
-                        Status = "Activa"
+                        Status = "Activa",
+                        Message = "Casa en venta - Propietario ausente"
                     },
                     new Address
                     {
                         Identifier = "156",
                         Extension = "156-1",
-                        Status = "Activa"
+                        Status = "Activa",
+                        Message = "Mascota en el jardín - Tocar con precaución"
                     },
                     new Address
                     {
-                        Identifier = "89",
-                        Extension = "89-D",
-                        Status = "Activa"
+                        Identifier = "207",
+                        Extension = "207-2",
+                        Status = "Activa",
+                        Message = "Solo recibe visitas de 9 AM a 6 PM"
                     },
                     new Address
                     {
                         Identifier = "234",
                         Extension = "234-2",
-                        Status = "Activa"
+                        Status = "Activa",
+                        Message = "Favor de usar la entrada lateral"
+                    },
+                    new Address
+                    {
+                        Identifier = "301",
+                        Extension = "301-3",
+                        Status = "Activa",
+                        Message = null
+                    },
+                    new Address
+                    {
+                        Identifier = "42",
+                        Extension = "42-C",
+                        Status = "Activa",
+                        Message = "Nuevo mensaje: Casa con piscina - No molestar después de las 8 PM"
+                    },
+                    new Address
+                    {
+                        Identifier = "5",
+                        Extension = "5-A",
+                        Status = "Activa",
+                        Message = "Casa rentada - Un inquilino"
                     },
                     new Address
                     {
                         Identifier = "67",
                         Extension = "67-A",
-                        Status = "Activa"
+                        Status = "Activa",
+                        Message = null
+                    },
+                    new Address
+                    {
+                        Identifier = "89",
+                        Extension = "89-D",
+                        Status = "Activa",
+                        Message = null
                     }
                 };
 
@@ -297,7 +307,7 @@ namespace MicroJack.API.Services
                     _context.Addresses.Add(address);
                 }
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("Test addresses seeded successfully");
+                _logger.LogInformation("Current addresses data seeded successfully");
             }
 
             // Seed test residents
@@ -475,6 +485,68 @@ namespace MicroJack.API.Services
                 }
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("Test vehicles seeded successfully");
+            }
+
+            // Seed sample pre-registrations based on current data
+            await SeedSamplePreRegistrationsAsync();
+        }
+
+        private async Task SeedSamplePreRegistrationsAsync()
+        {
+            if (!await _context.PreRegistrations.AnyAsync())
+            {
+                var samplePreRegistrations = new[]
+                {
+                    new PreRegistration
+                    {
+                        Plates = "ABC-123",
+                        VisitorName = "José Martinez García",
+                        VehicleBrand = "Toyota",
+                        VehicleColor = "Blanco",
+                        HouseVisited = "102",
+                        ExpectedArrivalTime = DateTime.Now.AddHours(2),
+                        PersonVisited = "Juan Pérez García",
+                        Status = "PENDIENTE",
+                        Comments = "Visita médica programada",
+                        CreatedAt = DateTime.Now.AddHours(-1),
+                        CreatedBy = "admin"
+                    },
+                    new PreRegistration
+                    {
+                        Plates = "XYZ-789",
+                        VisitorName = "Ana Sofía Rodríguez",
+                        VehicleBrand = "Honda",
+                        VehicleColor = "Azul",
+                        HouseVisited = "5",
+                        ExpectedArrivalTime = DateTime.Now.AddHours(4),
+                        PersonVisited = "María López Hernández",
+                        Status = "PENDIENTE",
+                        Comments = "Entrega de paquete importante",
+                        CreatedAt = DateTime.Now.AddHours(-1),
+                        CreatedBy = "admin"
+                    },
+                    new PreRegistration
+                    {
+                        Plates = "DEF-456",
+                        VisitorName = "Carlos Eduardo Mendoza",
+                        VehicleBrand = "Nissan",
+                        VehicleColor = "Negro",
+                        HouseVisited = "207",
+                        ExpectedArrivalTime = DateTime.Now.AddHours(6),
+                        PersonVisited = "Carlos Ramírez Sánchez",
+                        Status = "PENDIENTE",
+                        Comments = "Reunión de trabajo",
+                        CreatedAt = DateTime.Now.AddMinutes(-40),
+                        CreatedBy = "admin"
+                    }
+                };
+
+                foreach (var preReg in samplePreRegistrations)
+                {
+                    _context.PreRegistrations.Add(preReg);
+                }
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Sample pre-registrations seeded successfully");
             }
         }
     }

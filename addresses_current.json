@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "identifier": "102",
+    "extension": "102-1",
+    "representativeResidentId": 1,
+    "status": "Activa",
+    "message": "Mensaje actualizado: Casa con jardín amplio - Familia de 3 personas"
+  },
+  {
+    "id": 4,
+    "identifier": "15",
+    "extension": "15-B",
+    "representativeResidentId": 4,
+    "status": "Activa",
+    "message": "Casa en venta - Propietario ausente"
+  },
+  {
+    "id": 7,
+    "identifier": "156",
+    "extension": "156-1",
+    "representativeResidentId": 7,
+    "status": "Activa",
+    "message": "Mascota en el jardín - Tocar con precaución"
+  },
+  {
+    "id": 3,
+    "identifier": "207",
+    "extension": "207-2",
+    "representativeResidentId": 3,
+    "status": "Activa",
+    "message": "Solo recibe visitas de 9 AM a 6 PM"
+  },
+  {
+    "id": 9,
+    "identifier": "234",
+    "extension": "234-2",
+    "representativeResidentId": 9,
+    "status": "Activa",
+    "message": "Favor de usar la entrada lateral"
+  },
+  {
+    "id": 5,
+    "identifier": "301",
+    "extension": "301-3",
+    "representativeResidentId": 5,
+    "status": "Activa",
+    "message": "Timbre funcionando correctamente"
+  },
+  {
+    "id": 6,
+    "identifier": "42",
+    "extension": "42-C",
+    "representativeResidentId": 6,
+    "status": "Activa",
+    "message": "Nuevo mensaje: Casa con piscina - No molestar después de las 8 PM"
+  },
+  {
+    "id": 2,
+    "identifier": "5",
+    "extension": "5-A",
+    "representativeResidentId": 2,
+    "status": "Activa",
+    "message": "Casa rentada - Un inquilino"
+  },
+  {
+    "id": 10,
+    "identifier": "67",
+    "extension": "67-A",
+    "representativeResidentId": 10,
+    "status": "Activa",
+    "message": null
+  },
+  {
+    "id": 8,
+    "identifier": "89",
+    "extension": "89-D",
+    "representativeResidentId": 8,
+    "status": "Activa",
+    "message": null
+  }
+]

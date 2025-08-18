@@ -55,7 +55,7 @@ namespace MicroJack.API.Services
                 // Validar ventana de tiempo de ±2 horas
                 if (preReg != null)
                 {
-                    var now = DateTime.UtcNow;
+                    var now = DateTime.Now; // Cambiado de UtcNow a Now para usar hora local
                     var timeDiff = Math.Abs((now - preReg.ExpectedArrivalTime).TotalHours);
                     
                     if (timeDiff > 2)
