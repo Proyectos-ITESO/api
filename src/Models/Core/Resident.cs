@@ -32,5 +32,8 @@ namespace MicroJack.API.Models.Core
         
         [JsonIgnore]
         public virtual ICollection<AccessLog> AccessLogs { get; set; } = new List<AccessLog>();
+
+        [JsonIgnore]
+        public virtual ICollection<CallRecord> CallRecords { get; set; } = new List<CallRecord>();
     }
 }

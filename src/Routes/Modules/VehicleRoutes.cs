@@ -153,6 +153,7 @@ namespace MicroJack.API.Routes.Modules
     // DTOs
     public class VehicleCreateRequest
     {
+        [Required]
         public string LicensePlate { get; set; } = string.Empty;
         public string? PlateImageUrl { get; set; }
         public int? BrandId { get; set; }

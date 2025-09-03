@@ -9,7 +9,7 @@ namespace MicroJack.API.Routes
         {
             // Configure authentication routes (no auth required)
             app.MapAuthRoutes();
-            
+
             // Configure new normalized database routes
             app.MapGuardRoutes();
             app.MapAddressRoutes();
@@ -18,7 +18,7 @@ namespace MicroJack.API.Routes
             app.MapResidentRoutes();
             app.MapAccessLogRoutes();
             app.MapCatalogRoutes();
-            
+
             // Configure enhanced routes for frontend integration
             app.MapUnifiedAccessRoutes();
             app.MapFileUploadRoutes();
@@ -27,7 +27,9 @@ namespace MicroJack.API.Routes
             app.MapResidentManagementRoutes();
             app.MapBitacoraRoutes();
             app.MapHousesRoutes();
-            
+            app.MapUpdateRoutes();
+            app.MapTelephonyRoutes();
+
             // PhidgetTestRoutes.Configure(app); // Hardware testing module
         }
     }

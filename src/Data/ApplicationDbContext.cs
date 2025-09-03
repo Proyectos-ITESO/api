@@ -3,6 +3,7 @@ using MicroJack.API.Models;
 using MicroJack.API.Models.Core;
 using MicroJack.API.Models.Catalog;
 using MicroJack.API.Models.Transaction;
+using MicroJack.API.Models.Enums;
 
 namespace MicroJack.API.Data;
 
@@ -92,6 +93,10 @@ public class ApplicationDbContext : DbContext
     // Transaction entities
     public DbSet<AccessLog> AccessLogs { get; set; }
     public DbSet<EventLog> EventLogs { get; set; }
+    
+    // Telephony entities
+    public DbSet<CallRecord> CallRecords { get; set; }
+    public DbSet<TelephonySettings> TelephonySettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -249,5 +254,22 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(b => b.GuardId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // CallRecord relationships
+        modelBuilder.Entity<CallRecord>()
+            .HasOne(cr => cr.RequestedByGuard)
+            .WithMany()
+            .HasForeignKey(cr => cr.RequestedByGuardId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<CallRecord>()
+            .HasOne(cr => cr.Resident)
+            .WithMany(r => r.CallRecords)
+            .HasForeignKey(cr => cr.ResidentId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // TelephonySettings singleton constraint
+        modelBuilder.Entity<TelephonySettings>()
+            .HasKey(ts => ts.Id);
     }
 }

@@ -1,26 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "/home/mike/Documents/Trabajo/RKS/MicroJack.API/MicroJack.API.csproj": {}
+    "/home/emfr/chambas/Insano/realGforLife/api/MicroJack.API.csproj": {}
   },
   "projects": {
-    "/home/mike/Documents/Trabajo/RKS/MicroJack.API/MicroJack.API.csproj": {
+    "/home/emfr/chambas/Insano/realGforLife/MicroJack.Updater/MicroJack.Updater.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/mike/Documents/Trabajo/RKS/MicroJack.API/MicroJack.API.csproj",
-        "projectName": "MicroJack.API",
-        "projectPath": "/home/mike/Documents/Trabajo/RKS/MicroJack.API/MicroJack.API.csproj",
-        "packagesPath": "/home/mike/.nuget/packages/",
-        "outputPath": "/home/mike/Documents/Trabajo/RKS/MicroJack.API/obj/",
+        "projectUniqueName": "/home/emfr/chambas/Insano/realGforLife/MicroJack.Updater/MicroJack.Updater.csproj",
+        "projectName": "MicroJack.Updater",
+        "projectPath": "/home/emfr/chambas/Insano/realGforLife/MicroJack.Updater/MicroJack.Updater.csproj",
+        "packagesPath": "/home/emfr/.nuget/packages/",
+        "outputPath": "/home/emfr/chambas/Insano/realGforLife/MicroJack.Updater/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/mike/.nuget/NuGet/NuGet.Config"
+          "/home/emfr/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "/usr/lib64/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -33,13 +32,64 @@
           "warnAsError": [
             "NU1605"
           ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/8.0.110/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/emfr/chambas/Insano/realGforLife/api/MicroJack.API.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/emfr/chambas/Insano/realGforLife/api/MicroJack.API.csproj",
+        "projectName": "MicroJack.API",
+        "projectPath": "/home/emfr/chambas/Insano/realGforLife/api/MicroJack.API.csproj",
+        "packagesPath": "/home/emfr/.nuget/packages/",
+        "outputPath": "/home/emfr/chambas/Insano/realGforLife/api/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/emfr/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
         },
-        "restoreAuditProperties": {
-          "enableAudit": "true",
-          "auditLevel": "low",
-          "auditMode": "direct"
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/emfr/chambas/Insano/realGforLife/MicroJack.Updater/MicroJack.Updater.csproj": {
+                "projectPath": "/home/emfr/chambas/Insano/realGforLife/MicroJack.Updater/MicroJack.Updater.csproj"
+              }
+            }
+          }
         },
-        "SdkAnalysisLevel": "9.0.100"
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
       },
       "frameworks": {
         "net8.0": {
@@ -72,12 +122,6 @@
             "Microsoft.EntityFrameworkCore.Tools": {
               "target": "Package",
               "version": "[8.0.15, )"
-            },
-            "Microsoft.NET.ILLink.Tasks": {
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[8.0.19, )",
-              "autoReferenced": true
             },
             "Phidget22.NET": {
               "target": "Package",
@@ -115,20 +159,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-              "version": "[8.0.19, 8.0.19]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[8.0.19, 8.0.19]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Runtime.win-x64",
-              "version": "[8.0.19, 8.0.19]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -137,12 +167,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/9.0.109/PortableRuntimeIdentifierGraph.json"
-        }
-      },
-      "runtimes": {
-        "win-x64": {
-          "#import": []
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/8.0.110/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

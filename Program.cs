@@ -20,6 +20,12 @@ builder.Services.Configure<LicenseSettings>(builder.Configuration.GetSection("Li
 builder.Services.AddSingleton<ILicenseService, LicenseService>();
 */
 builder.Services.AddHttpClient();
+// Typed client for Grandstream UCM API (accept self-signed certs by default; adjust for prod)
+builder.Services.AddHttpClient<IUcmClient, UcmClient>()
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => true
+    });
 
 
 // --- 1. Configuración de Servicios ---
@@ -43,7 +49,7 @@ Console.WriteLine($"Using database path: {dbPath}");
 static string GetDatabasePath(IConfiguration configuration)
 {
     var configConnection = configuration.GetConnectionString("DefaultConnection");
-    
+
     // If connection string specifies an absolute path, use it
     if (!string.IsNullOrEmpty(configConnection) && configConnection.Contains("Data Source="))
     {
@@ -57,14 +63,14 @@ static string GetDatabasePath(IConfiguration configuration)
             }
         }
     }
-    
+
     // Use data directory for database
     var dataDir = Environment.GetEnvironmentVariable("MICROJACK_DATA_DIR");
     if (!string.IsNullOrEmpty(dataDir) && Directory.Exists(dataDir))
     {
         return Path.Combine(dataDir, "microjack.db");
     }
-    
+
     // Use current working directory if writable, otherwise use user data directory
     var currentDir = Directory.GetCurrentDirectory();
     try
@@ -116,13 +122,13 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(options =>
 {
     // Admin-level policies (Admin or SuperAdmin can access)
-    options.AddPolicy("AdminLevel", policy => 
+    options.AddPolicy("AdminLevel", policy =>
         policy.RequireRole("Admin", "SuperAdmin"));
-    
+
     // Guard-level policies (any authenticated user can access)
     options.AddPolicy("GuardLevel", policy =>
         policy.RequireRole("Guard", "Admin", "SuperAdmin"));
-    
+
     // Super Admin only (highest privilege level)
     options.AddPolicy("SuperAdminLevel", policy =>
         policy.RequireRole("SuperAdmin"));
@@ -163,7 +169,9 @@ builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 // Other services
 builder.Services.AddScoped<IPhidgetService, PhidgetService>();
 builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
+builder.Services.AddScoped<IUpdateService, UpdateService>();
 builder.Services.AddScoped<DatabaseInitializationService>();
+builder.Services.AddScoped<ICallService, TelephonyService>();
 
 // Configurar CORS
 var corsSettings = builder.Configuration.GetSection("CorsSettings");
@@ -210,7 +218,7 @@ catch (Exception ex)
 {
     app.Logger.LogCritical(ex, "La validación de la licencia falló. La aplicación se cerrará.");
     // Terminar la aplicación si la validación falla
-    return; 
+    return;
 }
 */
 app.Logger.LogInformation("Validación de licencia DESHABILITADA - modo desarrollo.");
@@ -270,3 +278,6 @@ ApiRoutes.Configure(app);
 // --- 4. Iniciar la Aplicación ---
 app.Logger.LogInformation("Iniciando MicroJack.API...");
 app.Run();
+
+// Make Program class public for testing
+public partial class Program { }

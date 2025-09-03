@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    
+
     <!-- Version Information -->
     <Version>1.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
@@ -35,5 +35,19 @@
     <EmbeddedResource Remove="licensing-server\**\*" />
     <None Remove="licensing-server\**\*" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Referencia al proyecto Updater -->
+    <ProjectReference Include="..\MicroJack.Updater\MicroJack.Updater.csproj" />
+  </ItemGroup>
+
+  <!-- Copy MicroJack.Updater executable to output directory after build -->
+  <Target Name="CopyUpdater" AfterTargets="Build">
+    <ItemGroup>
+      <UpdaterFiles Include="..\MicroJack.Updater\bin\$(Configuration)\net8.0\MicroJack.Updater*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(UpdaterFiles)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+    <Message Text="Copied MicroJack.Updater to output directory" Importance="high" />
+  </Target>
 
 </Project>

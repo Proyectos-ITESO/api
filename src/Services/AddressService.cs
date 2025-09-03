@@ -75,20 +75,49 @@ namespace MicroJack.API.Services
         {
             try
             {
-                // Check if identifier already exists
-                var existingAddress = await _context.Addresses
-                    .FirstOrDefaultAsync(a => a.Identifier == address.Identifier);
-                
-                if (existingAddress != null)
-                {
+                if (string.IsNullOrWhiteSpace(address.Identifier))
+                    throw new ApplicationException("Identifier is required");
+                if (string.IsNullOrWhiteSpace(address.Extension))
+                    throw new ApplicationException("Extension is required");
+
+                address.Identifier = address.Identifier.Trim();
+                address.Extension = address.Extension.Trim();
+
+                // Ensure unique by extension
+                var extConflict = await _context.Addresses.AnyAsync(a => a.Extension == address.Extension);
+                if (extConflict)
+                    throw new ApplicationException($"Extension '{address.Extension}' already exists");
+
+                // Optionally ensure identifier uniqueness (current behavior)
+                var idConflict = await _context.Addresses.AnyAsync(a => a.Identifier == address.Identifier);
+                if (idConflict)
                     throw new ApplicationException($"Address with identifier '{address.Identifier}' already exists");
-                }
 
                 _context.Addresses.Add(address);
                 await _context.SaveChangesAsync();
                 
                 _logger.LogInformation("Address created successfully: {Identifier}", address.Identifier);
                 return address;
+            }
+            catch (DbUpdateException dbex) when (dbex.InnerException is Microsoft.Data.Sqlite.SqliteException sqlEx)
+            {
+                // Map common constraint errors to user-friendly messages
+                if (sqlEx.Message.Contains("UNIQUE constraint failed", StringComparison.OrdinalIgnoreCase))
+                {
+                    var msg = sqlEx.Message.Contains("Addresses.Extension", StringComparison.OrdinalIgnoreCase)
+                        ? "Extension already exists"
+                        : sqlEx.Message.Contains("Addresses.Identifier", StringComparison.OrdinalIgnoreCase)
+                            ? "Identifier already exists" : "Unique constraint failed";
+                    _logger.LogWarning(dbex, "Address create conflict: {Message}", msg);
+                    throw new ApplicationException(msg);
+                }
+                if (sqlEx.Message.Contains("NOT NULL constraint failed", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning(dbex, "Address create validation error: {Message}", sqlEx.Message);
+                    throw new ApplicationException("Missing required field (Identifier/Extension)");
+                }
+                _logger.LogError(dbex, "DB error creating address");
+                throw;
             }
             catch (Exception ex)
             {
@@ -107,25 +136,59 @@ namespace MicroJack.API.Services
                     return null;
                 }
 
-                // Check if new identifier conflicts with another address
-                if (address.Identifier != existingAddress.Identifier)
+                if (string.IsNullOrWhiteSpace(address.Identifier))
+                    throw new ApplicationException("Identifier is required");
+
+                var newIdentifier = address.Identifier.Trim();
+                var newExtension = address.Extension?.Trim();
+
+                // Check if new identifier conflicts with another address (current behavior)
+                if (!string.Equals(existingAddress.Identifier, newIdentifier, StringComparison.Ordinal))
                 {
                     var conflictAddress = await _context.Addresses
-                        .FirstOrDefaultAsync(a => a.Identifier == address.Identifier);
-                    
+                        .FirstOrDefaultAsync(a => a.Identifier == newIdentifier);
                     if (conflictAddress != null)
-                    {
-                        throw new ApplicationException($"Address with identifier '{address.Identifier}' already exists");
-                    }
+                        throw new ApplicationException($"Address with identifier '{newIdentifier}' already exists");
                 }
 
-                existingAddress.Identifier = address.Identifier;
+                // Check extension uniqueness if changed and provided
+                if (!string.IsNullOrWhiteSpace(newExtension) && !string.Equals(existingAddress.Extension, newExtension, StringComparison.Ordinal))
+                {
+                    var extConflict = await _context.Addresses.AnyAsync(a => a.Extension == newExtension);
+                    if (extConflict)
+                        throw new ApplicationException($"Extension '{newExtension}' already exists");
+                }
+
+                existingAddress.Identifier = newIdentifier;
+                if (!string.IsNullOrWhiteSpace(newExtension))
+                {
+                    existingAddress.Extension = newExtension;
+                }
                 existingAddress.Status = address.Status;
                 existingAddress.Message = address.Message;
 
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("Address updated successfully: {Id}", id);
                 return existingAddress;
+            }
+            catch (DbUpdateException dbex) when (dbex.InnerException is Microsoft.Data.Sqlite.SqliteException sqlEx)
+            {
+                if (sqlEx.Message.Contains("UNIQUE constraint failed", StringComparison.OrdinalIgnoreCase))
+                {
+                    var msg = sqlEx.Message.Contains("Addresses.Extension", StringComparison.OrdinalIgnoreCase)
+                        ? "Extension already exists"
+                        : sqlEx.Message.Contains("Addresses.Identifier", StringComparison.OrdinalIgnoreCase)
+                            ? "Identifier already exists" : "Unique constraint failed";
+                    _logger.LogWarning(dbex, "Address update conflict: {Message}", msg);
+                    throw new ApplicationException(msg);
+                }
+                if (sqlEx.Message.Contains("NOT NULL constraint failed", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning(dbex, "Address update validation error: {Message}", sqlEx.Message);
+                    throw new ApplicationException("Missing required field (Identifier/Extension)");
+                }
+                _logger.LogError(dbex, "DB error updating address {Id}", id);
+                throw;
             }
             catch (Exception ex)
             {

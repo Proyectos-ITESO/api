@@ -24,6 +24,9 @@ namespace MicroJack.API.Services
                 await _context.Database.EnsureCreatedAsync();
                 _logger.LogInformation("Database created/verified successfully");
 
+                // Ensure telephony schema exists
+                await EnsureTelephonySchemaAsync();
+
                 // Seed catalog data
                 await SeedCatalogDataAsync();
                 
@@ -36,9 +39,107 @@ namespace MicroJack.API.Services
 
                 _logger.LogInformation("Database initialization completed successfully");
             }
+            catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.SqliteErrorCode == 26 || (ex.Message?.Contains("file is not a database", StringComparison.OrdinalIgnoreCase) ?? false))
+            {
+                // Handle corrupted or non-encrypted existing file: back it up and recreate
+                try
+                {
+                    var cs = _context.Database.GetDbConnection().ConnectionString;
+                    var builder = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(cs);
+                    var path = builder.DataSource;
+                    if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                    {
+                        var backupPath = path + $".corrupt-{DateTime.Now:yyyyMMddHHmmss}";
+                        File.Move(path, backupPath, true);
+                        _logger.LogWarning("Existing DB was invalid. Moved to {Backup}. Creating a fresh database...", backupPath);
+                    }
+
+                    await _context.Database.EnsureCreatedAsync();
+                    _logger.LogInformation("Fresh database created after recovering from invalid DB file.");
+
+                    // Proceed with rest of initialization on the fresh DB
+                    await EnsureTelephonySchemaAsync();
+                    await SeedCatalogDataAsync();
+                    await SeedRolesAsync();
+                    await SeedInitialAdminAsync();
+                    await SeedTestDataAsync();
+
+                    _logger.LogInformation("Database initialization completed successfully after recovery");
+                }
+                catch (Exception inner)
+                {
+                    _logger.LogError(inner, "Failed to recover from invalid database file");
+                    throw;
+                }
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during database initialization");
+                throw;
+            }
+        }
+
+        private async Task EnsureTelephonySchemaAsync()
+        {
+            try
+            {
+                // Create TelephonySettings table if not exists
+                var createSettings = @"
+                    CREATE TABLE IF NOT EXISTS TelephonySettings (
+                        Id INTEGER NOT NULL PRIMARY KEY CHECK (Id = 1),
+                        Provider TEXT NOT NULL,
+                        BaseUrl TEXT NULL,
+                        Username TEXT NULL,
+                        Password TEXT NULL,
+                        DefaultFromExtension TEXT NULL,
+                        DefaultTrunk TEXT NULL,
+                        Enabled INTEGER NOT NULL DEFAULT 0,
+                        UpdatedAt TEXT NULL
+                    );";
+
+                await _context.Database.ExecuteSqlRawAsync(createSettings);
+
+                // Create CallRecords table if not exists
+                var createCalls = @"
+                    CREATE TABLE IF NOT EXISTS CallRecords (
+                        Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        ToNumber TEXT NOT NULL,
+                        FromExtension TEXT NULL,
+                        Direction INTEGER NOT NULL,
+                        Status INTEGER NOT NULL,
+                        Provider TEXT NULL,
+                        ExternalId TEXT NULL,
+                        ErrorMessage TEXT NULL,
+                        RequestedByGuardId INTEGER NULL,
+                        ResidentId INTEGER NULL,
+                        CreatedAt TEXT NOT NULL,
+                        UpdatedAt TEXT NULL,
+                        StartedAt TEXT NULL,
+                        EndedAt TEXT NULL,
+                        FOREIGN KEY(RequestedByGuardId) REFERENCES Guards(Id) ON DELETE SET NULL,
+                        FOREIGN KEY(ResidentId) REFERENCES Residents(Id) ON DELETE SET NULL
+                    );";
+
+                await _context.Database.ExecuteSqlRawAsync(createCalls);
+
+                // Seed default TelephonySettings row if missing
+                var exists = await _context.TelephonySettings.AnyAsync(s => s.Id == 1);
+                if (!exists)
+                {
+                    _context.TelephonySettings.Add(new Models.Core.TelephonySettings
+                    {
+                        Id = 1,
+                        Provider = "Simulated",
+                        Enabled = false
+                    });
+                    await _context.SaveChangesAsync();
+                }
+
+                _logger.LogInformation("Telephony schema ensured");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed ensuring telephony schema");
                 throw;
             }
         }

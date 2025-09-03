@@ -163,6 +163,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem($"Error asignando representante: {ex.Message}");
                 }
             })
+            .RequireAuthorization("AdminLevel")
             .WithName("SetHouseRepresentative")
             .WithSummary("Asignar residente representante a una casa (solo admins)");
 

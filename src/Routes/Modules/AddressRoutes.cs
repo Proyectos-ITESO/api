@@ -49,14 +49,20 @@ namespace MicroJack.API.Routes.Modules
             .Produces<object>(200)
             .Produces(404);
 
-            // POST create new address
+            // POST create new address (AdminLevel)
             addressGroup.MapPost("/", async (AddressCreateRequest request, IAddressService addressService) =>
             {
                 try
                 {
+                    if (string.IsNullOrWhiteSpace(request.Identifier))
+                        return Results.BadRequest(new { success = false, message = "Identifier is required" });
+                    if (string.IsNullOrWhiteSpace(request.Extension))
+                        return Results.BadRequest(new { success = false, message = "Extension is required" });
+
                     var address = new Address
                     {
-                        Identifier = request.Identifier,
+                        Identifier = request.Identifier.Trim(),
+                        Extension = request.Extension.Trim(),
                         Status = request.Status,
                         Message = request.Message
                     };
@@ -64,24 +70,35 @@ namespace MicroJack.API.Routes.Modules
                     var createdAddress = await addressService.CreateAddressAsync(address);
                     return Results.Created($"/api/addresses/{createdAddress.Id}", new { success = true, data = createdAddress });
                 }
+                catch (ApplicationException aex)
+                {
+                    // Conflictos/validación
+                    return Results.Conflict(new { success = false, message = aex.Message });
+                }
                 catch (Exception ex)
                 {
                     return Results.Problem(title: "Error creating address", detail: ex.Message, statusCode: 500);
                 }
             })
-            .RequireAuthorization()
+            .RequireAuthorization("AdminLevel")
             .WithName("CreateAddress")
             .Produces<object>(201)
             .Produces(500);
 
-            // PUT update address
+            // PUT update address (AdminLevel)
             addressGroup.MapPut("/{id:int}", async (int id, AddressUpdateRequest request, IAddressService addressService) =>
             {
                 try
                 {
+                    if (string.IsNullOrWhiteSpace(request.Identifier))
+                        return Results.BadRequest(new { success = false, message = "Identifier is required" });
+                    if (string.IsNullOrWhiteSpace(request.Extension))
+                        return Results.BadRequest(new { success = false, message = "Extension is required" });
+
                     var address = new Address
                     {
-                        Identifier = request.Identifier,
+                        Identifier = request.Identifier.Trim(),
+                        Extension = request.Extension.Trim(),
                         Status = request.Status,
                         Message = request.Message
                     };
@@ -92,17 +109,21 @@ namespace MicroJack.API.Routes.Modules
 
                     return Results.Ok(new { success = true, data = updatedAddress });
                 }
+                catch (ApplicationException aex)
+                {
+                    return Results.Conflict(new { success = false, message = aex.Message });
+                }
                 catch (Exception ex)
                 {
                     return Results.Problem(title: "Error updating address", detail: ex.Message, statusCode: 500);
                 }
             })
-            .RequireAuthorization()
+            .RequireAuthorization("AdminLevel")
             .WithName("UpdateAddress")
             .Produces<object>(200)
             .Produces(404);
 
-            // DELETE address
+            // DELETE address (SuperAdminLevel)
             addressGroup.MapDelete("/{id:int}", async (int id, IAddressService addressService) =>
             {
                 try
@@ -118,7 +139,7 @@ namespace MicroJack.API.Routes.Modules
                     return Results.Problem(title: "Error deleting address", detail: ex.Message, statusCode: 500);
                 }
             })
-            .RequireAuthorization()
+            .RequireAuthorization("SuperAdminLevel")
             .WithName("DeleteAddress")
             .Produces<object>(200)
             .Produces(404);
@@ -129,6 +150,7 @@ namespace MicroJack.API.Routes.Modules
     public class AddressCreateRequest
     {
         public string Identifier { get; set; } = string.Empty;
+        public string Extension { get; set; } = string.Empty;
         public string? Status { get; set; }
         public string? Message { get; set; }
     }
@@ -136,6 +158,7 @@ namespace MicroJack.API.Routes.Modules
     public class AddressUpdateRequest
     {
         public string Identifier { get; set; } = string.Empty;
+        public string Extension { get; set; } = string.Empty;
         public string? Status { get; set; }
         public string? Message { get; set; }
     }
