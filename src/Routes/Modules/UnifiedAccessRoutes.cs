@@ -309,6 +309,272 @@ namespace MicroJack.API.Routes.Modules
             .WithSummary("Get summary of all currently active visits")
             .Produces<object>(200)
             .Produces(500);
+
+            // POST unified entry registration with multiple image upload
+            accessGroup.MapPost("/register-entry-with-images", async (
+                HttpRequest request,
+                IVisitorService visitorService,
+                IVehicleService vehicleService,
+                IResidentService residentService,
+                IAccessLogService accessLogService,
+                HttpContext context) =>
+            {
+                try
+                {
+                    // Get guard ID from JWT token
+                    var guardIdClaim = context.User.FindFirst("GuardId");
+                    if (guardIdClaim == null || !int.TryParse(guardIdClaim.Value, out int guardId))
+                    {
+                        return Results.BadRequest(new { success = false, message = "Invalid authentication token" });
+                    }
+
+                    // Parse form data
+                    var form = await request.ReadFormAsync();
+                    
+                    // Extract basic visitor information
+                    var visitorFullName = form["visitorFullName"].ToString();
+                    if (string.IsNullOrEmpty(visitorFullName))
+                    {
+                        return Results.BadRequest(new { success = false, message = "Visitor full name is required" });
+                    }
+
+                    // Handle vehicle information
+                    string? licensePlate = form["licensePlate"].ToString();
+                    Vehicle? vehicle = null;
+                    
+                    if (!string.IsNullOrEmpty(licensePlate))
+                    {
+                        // Try to find existing vehicle by license plate
+                        vehicle = await vehicleService.GetVehicleByLicensePlateAsync(licensePlate.ToUpper());
+                        
+                        if (vehicle == null)
+                        {
+                            // Create new vehicle
+                            vehicle = new Vehicle
+                            {
+                                LicensePlate = licensePlate.ToUpper(),
+                                PlateImageUrl = null, // Will be set after image upload
+                                BrandId = null,
+                                ColorId = null,
+                                TypeId = null
+                            };
+                        }
+                    }
+
+                    // Handle address and resident
+                    Resident? resident = null;
+                    int addressId;
+
+                    if (int.TryParse(form["residentId"], out int residentIdValue))
+                    {
+                        resident = await residentService.GetResidentByIdAsync(residentIdValue);
+                        if (resident == null)
+                        {
+                            return Results.BadRequest(new { 
+                                success = false, 
+                                message = $"Resident with ID {residentIdValue} not found" 
+                            });
+                        }
+                    }
+
+                    var house = form["house"].ToString();
+                    if (string.IsNullOrWhiteSpace(house) && !int.TryParse(form["addressId"], out int addressIdValue))
+                    {
+                        return Results.BadRequest(new { success = false, message = "House identifier or AddressId is required." });
+                    }
+
+                    var addressService = context.RequestServices.GetRequiredService<IAddressService>();
+
+                    if (int.TryParse(form["addressId"], out addressIdValue))
+                    {
+                        var addressById = await addressService.GetAddressByIdAsync(addressIdValue);
+                        if (addressById == null)
+                        {
+                            return Results.BadRequest(new { 
+                                success = false, 
+                                message = $"Address with ID {addressIdValue} not found" 
+                            });
+                        }
+                        addressId = addressById.Id;
+                    }
+                    else
+                    {
+                        var addresses = await addressService.GetAllAddressesAsync();
+                        var targetAddress = addresses.FirstOrDefault(a => a.Identifier.Equals(house, StringComparison.OrdinalIgnoreCase));
+
+                        if (targetAddress != null)
+                        {
+                            addressId = targetAddress.Id;
+                        }
+                        else
+                        {
+                            var newAddress = new MicroJack.API.Models.Core.Address
+                            {
+                                Identifier = house,
+                                Extension = "000",
+                                Status = "Active"
+                            };
+                            var createdAddress = await addressService.CreateAddressAsync(newAddress);
+                            addressId = createdAddress.Id;
+                        }
+                    }
+
+                    // Handle file uploads
+                    string? ineImageUrl = null;
+                    string? faceImageUrl = null;
+                    string? plateImageUrl = null;
+
+                    var uploadsPath = Path.Combine(context.RequestServices.GetRequiredService<IWebHostEnvironment>().ContentRootPath, "uploads");
+
+                    if (form.Files["ineImage"] != null)
+                    {
+                        var ineFile = form.Files["ineImage"];
+                        var ineFileName = $"{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N[0..8]}{Path.GetExtension(ineFile.FileName)}";
+                        var ineFilePath = Path.Combine(uploadsPath, "ine", ineFileName);
+                        Directory.CreateDirectory(Path.GetDirectoryName(ineFilePath));
+                        
+                        using (var stream = new FileStream(ineFilePath, FileMode.Create))
+                        {
+                            await ineFile.CopyToAsync(stream);
+                        }
+                        ineImageUrl = $"/uploads/ine/{ineFileName}";
+                    }
+
+                    if (form.Files["faceImage"] != null)
+                    {
+                        var faceFile = form.Files["faceImage"];
+                        var faceFileName = $"{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N[0..8]}{Path.GetExtension(faceFile.FileName)}";
+                        var faceFilePath = Path.Combine(uploadsPath, "faces", faceFileName);
+                        Directory.CreateDirectory(Path.GetDirectoryName(faceFilePath));
+                        
+                        using (var stream = new FileStream(faceFilePath, FileMode.Create))
+                        {
+                            await faceFile.CopyToAsync(stream);
+                        }
+                        faceImageUrl = $"/uploads/faces/{faceFileName}";
+                    }
+
+                    if (form.Files["plateImage"] != null && vehicle != null)
+                    {
+                        var plateFile = form.Files["plateImage"];
+                        var plateFileName = $"{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N[0..8]}{Path.GetExtension(plateFile.FileName)}";
+                        var plateFilePath = Path.Combine(uploadsPath, "plates", plateFileName);
+                        Directory.CreateDirectory(Path.GetDirectoryName(plateFilePath));
+                        
+                        using (var stream = new FileStream(plateFilePath, FileMode.Create))
+                        {
+                            await plateFile.CopyToAsync(stream);
+                        }
+                        plateImageUrl = $"/uploads/plates/{plateFileName}";
+                        vehicle.PlateImageUrl = plateImageUrl;
+                    }
+
+                    // Create or update visitor
+                    Visitor visitor;
+                    var existingVisitors = await visitorService.GetAllVisitorsAsync();
+                    visitor = existingVisitors.FirstOrDefault(v => 
+                        v.FullName.Equals(visitorFullName, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (visitor == null)
+                    {
+                        visitor = new Visitor
+                        {
+                            FullName = visitorFullName,
+                            IneImageUrl = ineImageUrl,
+                            FaceImageUrl = faceImageUrl
+                        };
+                        visitor = await visitorService.CreateVisitorAsync(visitor);
+                    }
+                    else
+                    {
+                        visitor.FullName = visitorFullName;
+                        if (!string.IsNullOrEmpty(ineImageUrl))
+                            visitor.IneImageUrl = ineImageUrl;
+                        if (!string.IsNullOrEmpty(faceImageUrl))
+                            visitor.FaceImageUrl = faceImageUrl;
+                        
+                        visitor = await visitorService.UpdateVisitorAsync(visitor.Id, visitor);
+                    }
+
+                    // Create or update vehicle
+                    if (vehicle != null)
+                    {
+                        if (vehicle.Id == 0)
+                        {
+                            // New vehicle
+                            vehicle = await vehicleService.CreateVehicleAsync(vehicle);
+                        }
+                        else
+                        {
+                            // Update existing vehicle
+                            vehicle = await vehicleService.UpdateVehicleAsync(vehicle.Id, vehicle);
+                        }
+                    }
+
+                    // Create access log
+                    var purpose = form["purpose"].ToString() ?? "Visit";
+                    var notes = form["notes"].ToString();
+
+                    var accessLog = new AccessLog
+                    {
+                        VisitorId = visitor.Id,
+                        VehicleId = vehicle?.Id,
+                        AddressId = addressId,
+                        ResidentVisitedId = resident?.Id,
+                        EntryTimestamp = DateTime.UtcNow,
+                        Comments = notes,
+                        EntryGuardId = guardId,
+                        Status = "DENTRO"
+                    };
+
+                    var createdAccessLog = await accessLogService.CreateAccessLogAsync(accessLog);
+
+                    return Results.Created($"/api/accesslogs/{createdAccessLog.Id}", new
+                    {
+                        success = true,
+                        message = "Entry registered successfully with images",
+                        data = new
+                        {
+                            accessLog = createdAccessLog,
+                            visitor = new
+                            {
+                                visitor.Id,
+                                visitor.FullName,
+                                visitor.IneImageUrl,
+                                visitor.FaceImageUrl
+                            },
+                            vehicle = vehicle != null ? new
+                            {
+                                vehicle.Id,
+                                vehicle.LicensePlate,
+                                vehicle.PlateImageUrl,
+                                vehicle.BrandId,
+                                vehicle.ColorId,
+                                vehicle.TypeId
+                            } : null,
+                            resident = resident,
+                            entryTime = createdAccessLog.EntryTimestamp,
+                            guardId = guardId
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(
+                        title: "Error registering entry with images",
+                        detail: ex.Message,
+                        statusCode: 500
+                    );
+                }
+            })
+            .RequireAuthorization("GuardLevel")
+            .DisableAntiforgery()
+            .WithName("RegisterUnifiedEntryWithImages")
+            .WithSummary("Register a complete entry with visitor, vehicle, and image upload in one operation")
+            .Accepts<IFormFile>("multipart/form-data")
+            .Produces<object>(201)
+            .Produces(400)
+            .Produces(500);
         }
     }
 

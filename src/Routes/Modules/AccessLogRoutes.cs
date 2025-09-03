@@ -136,6 +136,161 @@ namespace MicroJack.API.Routes.Modules
             .WithName("DeleteAccessLog")
             .Produces<object>(200)
             .Produces(404);
+
+            // === NUEVOS ENDPOINTS DE BÚSQUEDA AVANZADA ===
+
+            // GET access logs by specific date
+            accessLogGroup.MapGet("/by-date/{date:datetime}", async (DateTime date, IAccessLogService accessLogService) =>
+            {
+                try
+                {
+                    var accessLogs = await accessLogService.GetAccessLogsByDateAsync(date);
+                    return Results.Ok(new { success = true, data = accessLogs });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Error getting access logs by date", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireAuthorization()
+            .WithName("GetAccessLogsByDate")
+            .Produces<object>(200);
+
+            // GET access logs by visitor name
+            accessLogGroup.MapGet("/by-visitor/{visitorName}", async (string visitorName, IAccessLogService accessLogService) =>
+            {
+                try
+                {
+                    var accessLogs = await accessLogService.GetAccessLogsByVisitorNameAsync(visitorName);
+                    return Results.Ok(new { success = true, data = accessLogs });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Error getting access logs by visitor name", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireAuthorization()
+            .WithName("GetAccessLogsByVisitorName")
+            .Produces<object>(200);
+
+            // GET access logs by license plate
+            accessLogGroup.MapGet("/by-plate/{licensePlate}", async (string licensePlate, IAccessLogService accessLogService) =>
+            {
+                try
+                {
+                    var accessLogs = await accessLogService.GetAccessLogsByLicensePlateAsync(licensePlate);
+                    return Results.Ok(new { success = true, data = accessLogs });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Error getting access logs by license plate", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireAuthorization()
+            .WithName("GetAccessLogsByLicensePlate")
+            .Produces<object>(200);
+
+            // GET access logs by vehicle characteristics
+            accessLogGroup.MapGet("/by-vehicle", async (int? brandId, int? colorId, int? typeId, IAccessLogService accessLogService) =>
+            {
+                try
+                {
+                    var accessLogs = await accessLogService.GetAccessLogsByVehicleCharacteristicsAsync(brandId, colorId, typeId);
+                    return Results.Ok(new { success = true, data = accessLogs });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Error getting access logs by vehicle characteristics", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireAuthorization()
+            .WithName("GetAccessLogsByVehicleCharacteristics")
+            .Produces<object>(200);
+
+            // GET access logs by address identifier
+            accessLogGroup.MapGet("/by-address/{addressIdentifier}", async (string addressIdentifier, IAccessLogService accessLogService) =>
+            {
+                try
+                {
+                    var accessLogs = await accessLogService.GetAccessLogsByAddressIdentifierAsync(addressIdentifier);
+                    return Results.Ok(new { success = true, data = accessLogs });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Error getting access logs by address identifier", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireAuthorization()
+            .WithName("GetAccessLogsByAddressIdentifier")
+            .Produces<object>(200);
+
+            // GET visitor history
+            accessLogGroup.MapGet("/history/visitor/{visitorId:int}", async (int visitorId, IAccessLogService accessLogService) =>
+            {
+                try
+                {
+                    var history = await accessLogService.GetVisitorHistoryAsync(visitorId);
+                    return Results.Ok(new { success = true, data = history });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Error getting visitor history", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireAuthorization()
+            .WithName("GetVisitorHistory")
+            .Produces<object>(200);
+
+            // GET vehicle history
+            accessLogGroup.MapGet("/history/vehicle/{licensePlate}", async (string licensePlate, IAccessLogService accessLogService) =>
+            {
+                try
+                {
+                    var history = await accessLogService.GetVehicleHistoryAsync(licensePlate);
+                    return Results.Ok(new { success = true, data = history });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Error getting vehicle history", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireAuthorization()
+            .WithName("GetVehicleHistory")
+            .Produces<object>(200);
+
+            // GET address history
+            accessLogGroup.MapGet("/history/address/{addressId:int}", async (int addressId, IAccessLogService accessLogService) =>
+            {
+                try
+                {
+                    var history = await accessLogService.GetAddressHistoryAsync(addressId);
+                    return Results.Ok(new { success = true, data = history });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Error getting address history", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireAuthorization()
+            .WithName("GetAddressHistory")
+            .Produces<object>(200);
+
+            // POST advanced search
+            accessLogGroup.MapPost("/search", async (AccessLogSearchRequest request, IAccessLogService accessLogService) =>
+            {
+                try
+                {
+                    var results = await accessLogService.AdvancedSearchAsync(request);
+                    return Results.Ok(new { success = true, data = results });
+                }
+                catch (Exception ex)
+                {
+                    return Results.Problem(title: "Error in advanced search", detail: ex.Message, statusCode: 500);
+                }
+            })
+            .RequireAuthorization()
+            .WithName("AdvancedSearch")
+            .Produces<object>(200);
         }
     }
 
@@ -157,4 +312,5 @@ namespace MicroJack.API.Routes.Modules
         public int ExitGuardId { get; set; }
         public string? Comments { get; set; }
     }
-}
+
+    }

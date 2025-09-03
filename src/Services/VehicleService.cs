@@ -106,6 +106,9 @@ namespace MicroJack.API.Services
                     throw new ApplicationException($"Vehicle with license plate '{vehicle.LicensePlate}' already exists");
                 }
 
+                // Generate mock data for optional fields if not provided
+                await GenerateMockDataForOptionalFieldsAsync(vehicle);
+
                 // Validate foreign keys
                 await ValidateVehicleReferencesAsync(vehicle);
 
@@ -277,6 +280,48 @@ namespace MicroJack.API.Services
                 if (!typeExists)
                 {
                     throw new ApplicationException($"Vehicle type with ID {vehicle.TypeId} does not exist");
+                }
+            }
+        }
+
+        private async Task GenerateMockDataForOptionalFieldsAsync(Vehicle vehicle)
+        {
+            // If no plate image URL is provided, set a default placeholder
+            if (string.IsNullOrEmpty(vehicle.PlateImageUrl))
+            {
+                vehicle.PlateImageUrl = $"/uploads/plates/{vehicle.LicensePlate.ToLower()}_placeholder.jpg";
+            }
+
+            // If no brand is specified, get a random brand or use the first available
+            if (!vehicle.BrandId.HasValue)
+            {
+                var brands = await _context.VehicleBrands.ToListAsync();
+                if (brands.Any())
+                {
+                    var random = new Random();
+                    vehicle.BrandId = brands[random.Next(brands.Count)].Id;
+                }
+            }
+
+            // If no color is specified, get a random color or use the first available
+            if (!vehicle.ColorId.HasValue)
+            {
+                var colors = await _context.VehicleColors.ToListAsync();
+                if (colors.Any())
+                {
+                    var random = new Random();
+                    vehicle.ColorId = colors[random.Next(colors.Count)].Id;
+                }
+            }
+
+            // If no type is specified, get a random type or use the first available
+            if (!vehicle.TypeId.HasValue)
+            {
+                var types = await _context.VehicleTypes.ToListAsync();
+                if (types.Any())
+                {
+                    var random = new Random();
+                    vehicle.TypeId = types[random.Next(types.Count)].Id;
                 }
             }
         }

@@ -56,6 +56,18 @@ namespace MicroJack.API.Models.Transaction
         [JsonPropertyName("gafeteNumber")]
         public string? GafeteNumber { get; set; } // Para peatones
 
+        [MaxLength(50)]
+        [JsonPropertyName("identificationMethod")]
+        public string? IdentificationMethod { get; set; } // INE, Foto, Placa, Referencia, etc.
+
+        [MaxLength(20)]
+        [JsonPropertyName("confidenceLevel")]
+        public string? ConfidenceLevel { get; set; } // ALTO, MEDIO, BAJO
+
+        [MaxLength(500)]
+        [JsonPropertyName("searchKeywords")]
+        public string? SearchKeywords { get; set; } // Palabras clave para búsqueda
+
         [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
 

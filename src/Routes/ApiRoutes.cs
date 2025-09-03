@@ -30,6 +30,9 @@ namespace MicroJack.API.Routes
             app.MapUpdateRoutes();
             app.MapTelephonyRoutes();
 
+            // Configure administration routes
+            app.MapAdminRoutes();
+
             // PhidgetTestRoutes.Configure(app); // Hardware testing module
         }
     }

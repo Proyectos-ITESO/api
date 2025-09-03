@@ -289,6 +289,11 @@ namespace MicroJack.API.Services
                 return await _context.AccessLogs
                     .Include(al => al.Visitor)
                     .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Brand)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Color)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Type)
                     .Include(al => al.Address)
                     .Include(al => al.EntryGuard)
                     .Where(al => al.Visitor.FullName.Contains(searchTerm) ||
@@ -302,6 +307,320 @@ namespace MicroJack.API.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error searching access logs with term {SearchTerm}", searchTerm);
+                return new List<AccessLog>();
+            }
+        }
+
+        // Nuevos métodos para búsqueda avanzada
+        public async Task<List<AccessLog>> GetAccessLogsByDateAsync(DateTime date)
+        {
+            try
+            {
+                var startDate = date.Date;
+                var endDate = date.Date.AddDays(1);
+
+                return await _context.AccessLogs
+                    .Include(al => al.Visitor)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Brand)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Color)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Type)
+                    .Include(al => al.Address)
+                    .Include(al => al.EntryGuard)
+                    .Where(al => al.EntryTimestamp >= startDate && al.EntryTimestamp < endDate)
+                    .OrderByDescending(al => al.EntryTimestamp)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting access logs by date {Date}", date);
+                return new List<AccessLog>();
+            }
+        }
+
+        public async Task<List<AccessLog>> GetAccessLogsByVisitorNameAsync(string visitorName)
+        {
+            try
+            {
+                return await _context.AccessLogs
+                    .Include(al => al.Visitor)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Brand)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Color)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Type)
+                    .Include(al => al.Address)
+                    .Include(al => al.EntryGuard)
+                    .Where(al => al.Visitor.FullName.Contains(visitorName))
+                    .OrderByDescending(al => al.EntryTimestamp)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting access logs by visitor name {VisitorName}", visitorName);
+                return new List<AccessLog>();
+            }
+        }
+
+        public async Task<List<AccessLog>> GetAccessLogsByLicensePlateAsync(string licensePlate)
+        {
+            try
+            {
+                return await _context.AccessLogs
+                    .Include(al => al.Visitor)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Brand)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Color)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Type)
+                    .Include(al => al.Address)
+                    .Include(al => al.EntryGuard)
+                    .Where(al => al.Vehicle != null && al.Vehicle.LicensePlate.Contains(licensePlate))
+                    .OrderByDescending(al => al.EntryTimestamp)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting access logs by license plate {LicensePlate}", licensePlate);
+                return new List<AccessLog>();
+            }
+        }
+
+        public async Task<List<AccessLog>> GetAccessLogsByVehicleCharacteristicsAsync(int? brandId = null, int? colorId = null, int? typeId = null)
+        {
+            try
+            {
+                var query = _context.AccessLogs
+                    .Include(al => al.Visitor)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Brand)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Color)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Type)
+                    .Include(al => al.Address)
+                    .Include(al => al.EntryGuard)
+                    .Where(al => al.Vehicle != null);
+
+                if (brandId.HasValue)
+                {
+                    query = query.Where(al => al.Vehicle!.BrandId == brandId);
+                }
+
+                if (colorId.HasValue)
+                {
+                    query = query.Where(al => al.Vehicle!.ColorId == colorId);
+                }
+
+                if (typeId.HasValue)
+                {
+                    query = query.Where(al => al.Vehicle!.TypeId == typeId);
+                }
+
+                return await query
+                    .OrderByDescending(al => al.EntryTimestamp)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting access logs by vehicle characteristics");
+                return new List<AccessLog>();
+            }
+        }
+
+        public async Task<List<AccessLog>> GetAccessLogsByAddressIdentifierAsync(string addressIdentifier)
+        {
+            try
+            {
+                return await _context.AccessLogs
+                    .Include(al => al.Visitor)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Brand)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Color)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Type)
+                    .Include(al => al.Address)
+                    .Include(al => al.EntryGuard)
+                    .Where(al => al.Address.Identifier.Contains(addressIdentifier))
+                    .OrderByDescending(al => al.EntryTimestamp)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting access logs by address identifier {AddressIdentifier}", addressIdentifier);
+                return new List<AccessLog>();
+            }
+        }
+
+        // Métodos para historial
+        public async Task<List<AccessLog>> GetVisitorHistoryAsync(int visitorId)
+        {
+            try
+            {
+                return await _context.AccessLogs
+                    .Include(al => al.Visitor)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Brand)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Color)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Type)
+                    .Include(al => al.Address)
+                    .Include(al => al.EntryGuard)
+                    .Where(al => al.VisitorId == visitorId)
+                    .OrderByDescending(al => al.EntryTimestamp)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting visitor history for visitor {VisitorId}", visitorId);
+                return new List<AccessLog>();
+            }
+        }
+
+        public async Task<List<AccessLog>> GetVehicleHistoryAsync(string licensePlate)
+        {
+            try
+            {
+                return await _context.AccessLogs
+                    .Include(al => al.Visitor)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Brand)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Color)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Type)
+                    .Include(al => al.Address)
+                    .Include(al => al.EntryGuard)
+                    .Where(al => al.Vehicle != null && al.Vehicle.LicensePlate == licensePlate)
+                    .OrderByDescending(al => al.EntryTimestamp)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting vehicle history for license plate {LicensePlate}", licensePlate);
+                return new List<AccessLog>();
+            }
+        }
+
+        public async Task<List<AccessLog>> GetAddressHistoryAsync(int addressId)
+        {
+            try
+            {
+                return await _context.AccessLogs
+                    .Include(al => al.Visitor)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Brand)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Color)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Type)
+                    .Include(al => al.Address)
+                    .Include(al => al.EntryGuard)
+                    .Where(al => al.AddressId == addressId)
+                    .OrderByDescending(al => al.EntryTimestamp)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting address history for address {AddressId}", addressId);
+                return new List<AccessLog>();
+            }
+        }
+
+        // Método para búsqueda combinada
+        public async Task<List<AccessLog>> AdvancedSearchAsync(AccessLogSearchRequest request)
+        {
+            try
+            {
+                var query = _context.AccessLogs
+                    .Include(al => al.Visitor)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Brand)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Color)
+                    .Include(al => al.Vehicle)
+                        .ThenInclude(v => v!.Type)
+                    .Include(al => al.Address)
+                    .Include(al => al.ResidentVisited)
+                    .Include(al => al.EntryGuard)
+                    .AsQueryable();
+
+                // Filtro por rango de fechas
+                if (request.StartDate.HasValue)
+                {
+                    query = query.Where(al => al.EntryTimestamp >= request.StartDate.Value);
+                }
+
+                if (request.EndDate.HasValue)
+                {
+                    var endDate = request.EndDate.Value.AddDays(1);
+                    query = query.Where(al => al.EntryTimestamp < endDate);
+                }
+
+                // Filtro por nombre de visitante
+                if (!string.IsNullOrWhiteSpace(request.VisitorName))
+                {
+                    query = query.Where(al => al.Visitor.FullName.Contains(request.VisitorName));
+                }
+
+                // Filtro por placa
+                if (!string.IsNullOrWhiteSpace(request.LicensePlate))
+                {
+                    query = query.Where(al => al.Vehicle != null && al.Vehicle.LicensePlate.Contains(request.LicensePlate));
+                }
+
+                // Filtros por características del vehículo
+                if (request.BrandId.HasValue)
+                {
+                    query = query.Where(al => al.Vehicle != null && al.Vehicle.BrandId == request.BrandId);
+                }
+
+                if (request.ColorId.HasValue)
+                {
+                    query = query.Where(al => al.Vehicle != null && al.Vehicle.ColorId == request.ColorId);
+                }
+
+                if (request.TypeId.HasValue)
+                {
+                    query = query.Where(al => al.Vehicle != null && al.Vehicle.TypeId == request.TypeId);
+                }
+
+                // Filtro por identificador de dirección
+                if (!string.IsNullOrWhiteSpace(request.AddressIdentifier))
+                {
+                    query = query.Where(al => al.Address.Identifier.Contains(request.AddressIdentifier));
+                }
+
+                // Filtro por estado
+                if (!string.IsNullOrWhiteSpace(request.Status))
+                {
+                    query = query.Where(al => al.Status == request.Status);
+                }
+
+                // Filtro por residente visitado
+                if (request.ResidentId.HasValue)
+                {
+                    query = query.Where(al => al.ResidentVisitedId == request.ResidentId);
+                }
+
+                // Ordenamiento y paginación
+                var result = await query
+                    .OrderByDescending(al => al.EntryTimestamp)
+                    .Skip((request.Page - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .ToListAsync();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in advanced search");
                 return new List<AccessLog>();
             }
         }

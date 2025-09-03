@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using MicroJack.API.Services.Interfaces;
 using MicroJack.API.Models.Core;
 using MicroJack.API.Middleware;
